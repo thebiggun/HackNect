@@ -1,0 +1,7 @@
+@import "tailwindcss";
+
+/* Force Clerk UserButton avatar to be larger */
+.cl-userButtonAvatarBox {
+  width: 35px !important;
+  height: 35px !important;
+}
