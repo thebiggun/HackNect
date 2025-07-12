@@ -1,12 +1,7 @@
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-    process.env.SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+import supabase from '@/lib/supabase';
 
 export async function POST(request) {
-    const body = await request.json();
+    const body = await request.json(); 
 
     // Extract user data from Clerk webhook body
     const clerk_id = body.data?.id;
