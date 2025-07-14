@@ -7,7 +7,10 @@ const HackathonForm = () => {
     const router = useRouter();
     const [form, setForm] = useState({
         title: "",
+        venue_type: "virtual", // "virtual" or "offline"
         venue: "",
+        city: "",
+        detailed_venue: "",
         description: "",
         team_min: "",
         team_max: "",
@@ -20,6 +23,41 @@ const HackathonForm = () => {
         pfp_url: null,
         pfpPreview: "./user.png",
     });
+
+    // Major Indian cities
+    const indianCities = [
+        "Agartala", "Agra", "Ahmedabad", "Ahmednagar", "Aizawl", "Ajmer", "Akola",
+        "Aligarh", "Alwar", "Ambala", "Ambattur", "Amravati", "Amritsar", "Anantapur",
+        "Asansol", "Avadi", "Aurangabad", "Bangalore", "Baranagar", "Bareilly",
+        "Bathinda", "Begusarai", "Belgaum", "Bharatpur", "Bhatpara", "Bhavnagar",
+        "Bhilai", "Bhilwara", "Bhiwandi", "Bhiwani", "Bhopal", "Bhubaneswar",
+        "Bhagalpur", "Bikaner", "Bilaspur", "Bokaro", "Chandigarh", "Charkhi Dadri",
+        "Chennai", "Coimbatore", "Cuttack", "Darbhanga", "Davanagere", "Dehradun",
+        "Delhi", "Delhi Cantonment", "Dhanbad", "Durgapur", "Erode", "Faridabad",
+        "Fatehabad", "Firozabad", "Gandhidham", "Gandhinagar", "Gaya", "Ghaziabad",
+        "Gopalpur", "Gorakhpur", "Gulbarga", "Guntur", "Gurgaon", "Guwahati",
+        "Gwalior", "Hardwar", "Hisar", "Howrah", "Hubli-Dharwad", "Hyderabad",
+        "Ichalkaranji", "Indore", "Jabalpur", "Jaipur", "Jalandhar", "Jalgaon",
+        "Jammu", "Jamnagar", "Jamshedpur", "Jhansi", "Jind", "Jodhpur", "Kadapa",
+        "Kakinada", "Kalyan-Dombivali", "Kanchipuram", "Kanpur", "Kaithal", "Karnal",
+        "Karur", "Katihar", "Kharagpur", "Kochi", "Kolhapur", "Kolkata", "Kollam",
+        "Korba", "Kota", "Kozhikode", "Kurnool", "Kurukshetra", "Latur", "Lucknow",
+        "Loni", "Ludhiana", "Madurai", "Mahendragarh", "Maheshtala", "Malegaon",
+        "Mangalore", "Mathura", "Meerut", "Moradabad", "Modinagar", "Mumbai",
+        "Murwara", "Muzaffarnagar", "Muzaffarpur", "Mysore", "Nagercoil", "Nagpur",
+        "Nanded", "Nashik", "Nellore", "New Delhi", "Nizamabad", "Noida", "Nuh",
+        "Panihati", "Panipat", "Pali", "Palwal", "Panchkula", "Patiala", "Patna",
+        "Pimpri-Chinchwad", "Puducherry", "Pune", "Raipur", "Rajahmundry",
+        "Rajkot", "Rajpur Sonarpur", "Rampur", "Ranchi", "Ratlam", "Rewari",
+        "Rohtak", "Rourkela", "Sagar", "Saharanpur", "Salem", "Sangli-Miraj",
+        "Satna", "Sikar", "Siliguri", "Sirsa", "Solapur", "Sonipat", "South Dumdum",
+        "Srinagar", "Surat", "Tiruchirappalli", "Tirunelveli", "Tirupati",
+        "Tirupur", "Tiruvannamalai", "Tiruvottiyur", "Tenali", "Thane", "Thanjavur",
+        "Thrissur", "Tumkur", "Udaipur", "Ujjain", "Ulhasnagar", "Vadodara",
+        "Varanasi", "Vasai-Virar", "Vijayawada", "Visakhapatnam", "Vizianagaram",
+        "Warangal", "Yamunanagar"
+    ];
+
 
     const handleChange = (e) => {
         const { name, value, type, files } = e.target;
@@ -40,10 +78,23 @@ const HackathonForm = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         const formData = new FormData();
+
+        // Construct venue string based on venue type
+        let venueString = "";
+        if (form.venue_type === "virtual") {
+            venueString = "Virtual Event";
+        } else {
+            venueString = `${form.detailed_venue}, ${form.city}, India`;
+        }
+
         for (const key in form) {
-            if (key === "bannerPreview" || key === "pfpPreview") continue; // skip previews
+            if (key === "bannerPreview" || key === "pfpPreview" || key === "city" || key === "detailed_venue" || key === "venue_type") continue; // skip previews and individual venue fields
             if (form[key]) formData.append(key, form[key]);
         }
+
+        // Add the constructed venue string
+        formData.append("venue", venueString);
+
         try {
             const res = await fetch("/api/hackathons", {
                 method: "POST",
@@ -62,18 +113,77 @@ const HackathonForm = () => {
     };
 
     return (
-        <div className="relative w-full max-w-2xl mx-auto mt-10 bg-white/10 border border-white/20 rounded-xl shadow-lg p-8 backdrop-blur-md">
+        <div className="relative w-full max-w-2xl mx-auto mt-6 sm:mt-10 bg-white/10 border border-white/20 rounded-xl shadow-lg p-4 sm:p-6 md:p-8 backdrop-blur-md">
             <form className="space-y-6" onSubmit={handleSubmit} encType="multipart/form-data">
                 <div className="flex flex-col gap-4 md:flex-row md:gap-8">
                     <div className="flex-1">
                         <label className="block text-white font-semibold mb-1">Title<span className="text-pink-400">*</span></label>
                         <input type="text" name="title" required value={form.title} onChange={handleChange} className="w-full rounded-lg px-4 py-2 bg-slate-900/80 text-white border border-slate-700 focus:ring-2 focus:ring-pink-400 outline-none" placeholder="Hackathon Title" />
                     </div>
-                    <div className="flex-1">
-                        <label className="block text-white font-semibold mb-1">Venue</label>
-                        <input type="text" name="venue" value={form.venue} onChange={handleChange} className="w-full rounded-lg px-4 py-2 bg-slate-900/80 text-white border border-slate-700 focus:ring-2 focus:ring-pink-400 outline-none" placeholder="Venue" />
+                </div>
+
+                {/* Venue Type Selection */}
+                <div>
+                    <label className="block text-white font-semibold mb-3">Event Type<span className="text-pink-400">*</span></label>
+                    <div className="flex gap-6">
+                        <label className="flex items-center cursor-pointer">
+                            <input
+                                type="radio"
+                                name="venue_type"
+                                value="virtual"
+                                checked={form.venue_type === "virtual"}
+                                onChange={handleChange}
+                                className="mr-2 text-pink-400 focus:ring-pink-400"
+                            />
+                            <span className="text-white">Virtual Event</span>
+                        </label>
+                        <label className="flex items-center cursor-pointer">
+                            <input
+                                type="radio"
+                                name="venue_type"
+                                value="offline"
+                                checked={form.venue_type === "offline"}
+                                onChange={handleChange}
+                                className="mr-2 text-pink-400 focus:ring-pink-400"
+                            />
+                            <span className="text-white">Offline Event</span>
+                        </label>
                     </div>
                 </div>
+
+                {/* Conditional Offline Venue Fields */}
+                {form.venue_type === "offline" && (
+                    <div className="space-y-4 p-4 bg-slate-800/30 rounded-lg border border-slate-700">
+                        <div>
+                            <label className="block text-white font-semibold mb-1">City<span className="text-pink-400">*</span></label>
+                            <select
+                                name="city"
+                                required
+                                value={form.city}
+                                onChange={handleChange}
+                                className="w-full rounded-lg px-4 py-2 bg-slate-900/80 text-white border border-slate-700 focus:ring-2 focus:ring-pink-400 outline-none"
+                            >
+                                <option value="">Select a city</option>
+                                {indianCities.map((city) => (
+                                    <option key={city} value={city}>{city}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-white font-semibold mb-1">Detailed Venue<span className="text-pink-400">*</span></label>
+                            <input
+                                type="text"
+                                name="detailed_venue"
+                                required
+                                value={form.detailed_venue}
+                                onChange={handleChange}
+                                className="w-full rounded-lg px-4 py-2 bg-slate-900/80 text-white border border-slate-700 focus:ring-2 focus:ring-pink-400 outline-none"
+                                placeholder="e.g., Tech Park Building, Floor 3, Room 301"
+                            />
+                        </div>
+                    </div>
+                )}
+
                 <div>
                     <label className="block text-white font-semibold mb-1">Description</label>
                     <textarea name="description" rows={3} value={form.description} onChange={handleChange} className="w-full rounded-lg px-4 py-2 bg-slate-900/80 text-white border border-slate-700 focus:ring-2 focus:ring-pink-400 outline-none" placeholder="Describe your hackathon..."></textarea>

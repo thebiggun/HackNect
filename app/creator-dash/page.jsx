@@ -58,6 +58,16 @@ const CreatorDash = () => {
         router.push(`/creator-dash/${hackathonId}`);
     };
 
+    // Helper to get registration status and days left for a hackathon
+    const getRegistrationStatus = (hackathon) => {
+        if (!hackathon || !hackathon.registration_deadline) return { status: 'Unknown', daysLeft: null };
+        const now = new Date();
+        const deadline = new Date(hackathon.registration_deadline);
+        const diff = deadline - now;
+        if (diff < 0) return { status: 'Expired', daysLeft: null };
+        return { status: 'Open', daysLeft: Math.ceil(diff / (1000 * 60 * 60 * 24)) };
+    };
+
     if (loading) {
         return (
             <div>
@@ -78,9 +88,9 @@ const CreatorDash = () => {
             <div className="fixed inset-0 z-0 overflow-hidden">
                 <BackgroundEffects />
             </div>
-            <div className="relative w-full p-8 pt-0">
-                <div className="px-6">
-                    <div className="flex items-center justify-between mb-8">
+            <div className="relative w-full p-4 sm:p-6 md:p-8 pt-0">
+                <div className="px-2 sm:px-4 md:px-6">
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4 md:gap-0">
                         <div>
                             <span className="text-3xl font-semibold text-white">
                                 Your
@@ -117,7 +127,7 @@ const CreatorDash = () => {
                             </a>
                         </div>
                     ) : (
-                        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                        <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
                             {hackathons.map((hackathon) => (
                                 <div 
                                     key={hackathon.id} 
@@ -126,6 +136,17 @@ const CreatorDash = () => {
                                 >
                                     {/* Banner Image */}
                                     <div className="h-48 bg-gradient-to-br from-slate-700 to-slate-800 relative">
+                                        {/* Registration Status Badge */}
+                                        {(() => {
+                                            const { status, daysLeft } = getRegistrationStatus(hackathon);
+                                            return (
+                                                <div className={`absolute top-4 left-4 z-10 px-4 py-1 rounded-full text-xs font-bold shadow-lg border-2 ${status === 'Open' ? 'bg-green-500/90 border-green-600 text-white' : 'bg-red-500/90 border-red-600 text-white'}`}>
+                                                    {status === 'Open'
+                                                        ? `Registration Open · ${daysLeft} day${daysLeft === 1 ? '' : 's'} left`
+                                                        : 'Registration Expired'}
+                                                </div>
+                                            );
+                                        })()}
                                         {hackathon.banner_url ? (
                                             <img 
                                                 src={hackathon.banner_url} 

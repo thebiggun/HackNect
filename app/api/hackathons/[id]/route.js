@@ -2,8 +2,9 @@ import { v4 as uuidv4 } from 'uuid';
 import supabase from '@/lib/supabase';
 import { auth } from '@clerk/nextjs/server';
 
-export async function GET(req, { params }) {
+export async function GET(req, context) {
     try {
+        const { params } = await context;
         const { id } = params;
         
         // Get the current user from Clerk
@@ -51,8 +52,9 @@ export async function GET(req, { params }) {
     }
 }
 
-export async function PUT(req, { params }) {
+export async function PUT(req, context) {
     try {
+        const { params } = await context;
         const { id } = params;
         
         // Get the current user from Clerk
