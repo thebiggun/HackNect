@@ -11,7 +11,7 @@ export const config = {
 export const runtime = 'nodejs'; // To avoid edge function issues
 
 export async function POST(req) {
-  const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET;
+  const WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET;
 
   if (!WEBHOOK_SECRET) {
     console.error("Missing WEBHOOK_SECRET env var");
