@@ -1,16 +1,43 @@
+import { buffer } from 'micro';
+import { Webhook } from 'svix';
 import supabase from '@/lib/supabase';
 
-export async function POST(request) {
-    const body = await request.json(); 
+export const config = {
+    api: {
+        bodyParser: false,
+    },
+};
 
-    // Extract user data from Clerk webhook body
+export async function POST(req) {
+    // Get raw body for verification
+    const payload = await buffer(req);
+    const headers = req.headers;
+
+    const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET;
+    if (!WEBHOOK_SECRET) {
+        console.error("Missing WEBHOOK_SECRET env var");
+        return new Response('Server misconfigured', { status: 500 });
+    }
+
+    const wh = new Webhook(WEBHOOK_SECRET);
+
+    let evt;
+    try {
+        evt = wh.verify(payload, headers);
+    } catch (err) {
+        console.error("Webhook signature verification failed:", err);
+        return new Response("Invalid signature", { status: 400 });
+    }
+
+    // Extract user data
+    const body = evt;
     const clerk_id = body.data?.id;
     const name = body.data?.first_name && body.data?.last_name
         ? `${body.data.first_name} ${body.data.last_name}`
         : body.data?.username || null;
     const email = body.data?.email_addresses?.[0]?.email_address || null;
 
-    // Insert into Supabase users table
+    // Insert into Supabase
     const { error } = await supabase.from('users').insert([
         { clerk_id, name, email }
     ]);
