@@ -45,23 +45,23 @@ const CreatorDash = () => {
         });
     };
 
-    const handleHackathonClick = async (hackathonId) => {
+    const handleHackathonClick =  (hackathonId) => {
         setNavLoading(true);
-        await router.push(`/creator-dash/${hackathonId}`);
+        router.push(`/creator-dash/${hackathonId}`);
         setNavLoading(false);
     };
 
-    const handleViewDetails = async (e, hackathonId) => {
+    const handleViewDetails =  (e, hackathonId) => {
         e.stopPropagation();
         setNavLoading(true);
-        await router.push(`/creator-dash/${hackathonId}`);
+        router.push(`/creator-dash/${hackathonId}`);
         setNavLoading(false);
     };
 
-    const handleEditHackathon = async (e, hackathonId) => {
+    const handleEditHackathon =  (e, hackathonId) => {
         e.stopPropagation();
         setNavLoading(true);
-        await router.push(`/creator-dash/${hackathonId}`);
+        router.push(`/creator-dash/${hackathonId}`);
         setNavLoading(false);
     };
 

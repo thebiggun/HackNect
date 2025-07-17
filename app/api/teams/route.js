@@ -40,7 +40,8 @@ export async function GET(req) {
                 *,
                 hackathons (
                     id,
-                    title
+                    title,
+                    registration_deadline
                 )
             `)
             .or(`team_leader_id.eq.${userData.id},teammates.cs.{${userData.id}}`);

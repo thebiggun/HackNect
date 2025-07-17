@@ -11,6 +11,7 @@ const page = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [navLoading, setNavLoading] = useState(false);
+    const [wins, setWins] = useState(0);
     const router = useRouter();
 
     useEffect(() => {
@@ -34,6 +35,20 @@ const page = () => {
         }
     };
 
+    const fetchWins = async (userRegistrationIds) => {
+        if (!userRegistrationIds.length) {
+            setWins(0);
+            return;
+        }
+        const res = await fetch('/api/shortlists/user-wins', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ registrationIds: userRegistrationIds }),
+        });
+        const data = await res.json();
+        setWins(data.count || 0);
+    };
+
     const fetchRegistrations = async () => {
         try {
             const response = await fetch('/api/teams');
@@ -41,6 +56,8 @@ const page = () => {
             
             if (data.success) {
                 setRegistrations(data.data || []);
+                const userRegistrationIds = (data.data || []).map(r => r.id);
+                fetchWins(userRegistrationIds);
             } else {
                 console.error('Failed to fetch registrations:', data.error);
             }
@@ -71,6 +88,9 @@ const page = () => {
             return deadline && new Date(deadline) < new Date();
         }
     ).length;
+
+    // Add this for ongoing hackathons
+    const ongoingCount = registrations.filter(r => !isExpired(r)).length;
 
     return (
         <div className='relative w-full p-4 sm:p-6 md:p-8 pt-0'>
@@ -127,7 +147,7 @@ const page = () => {
                                         </p>
                                         <button 
                                             onClick={async () => { setNavLoading(true); await router.push('/explore'); setNavLoading(false); }}
-                                            className="group relative px-6 py-3 bg-gradient-to-r from-cyan-500 to-purple-500 rounded-lg font-semibold text-white transition-all duration-300 hover:from-cyan-400 hover:to-purple-400 hover:shadow-[0_0_24px_8px_rgba(147,51,234,0.3)] hover:scale-105"
+                                            className="group relative px-6 py-3 bg-gradient-to-r from-cyan-500 to-purple-500 rounded-lg font-semibold text-white transition-all duration-300 hover:from-cyan-400 hover:to-purple-400 hover:shadow-[0_0_24px_8px_rgba(147,51,234,0.3)] hover:scale-105 cursor-pointer"
                                         >
                                             {navLoading ? <Loader size={18} className="mr-2 align-middle" /> : <div className="flex items-center space-x-2"><Plus className="w-5 h-5" /><span>Explore Hackathons</span></div>}
                                         </button>
@@ -189,13 +209,13 @@ const page = () => {
                                                         <div className="flex gap-2">
                                                             <Link
                                                                 href={`/registration/${registration.id}`}
-                                                                className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-400 hover:to-pink-400 transition-all duration-200 text-sm font-medium"
+                                                                className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-400 hover:to-pink-400 transition-all duration-200 text-sm font-medium cursor-pointer"
                                                             >
                                                                 View Details
                                                             </Link>
                                                             <Link
                                                                 href={`/explore/${registration.hackathon_id}`}
-                                                                className="p-2 bg-white/10 text-white rounded-lg hover:bg-white/20 transition-all duration-200"
+                                                                className="p-2 bg-white/10 text-white rounded-lg hover:bg-white/20 transition-all duration-200 cursor-pointer"
                                                             >
                                                                 <ExternalLink className="w-4 h-4" />
                                                             </Link>
@@ -226,7 +246,7 @@ const page = () => {
                                 <div>
                                     <div className="text-gray-300 text-sm">Participating</div>
                                     <div className="text-3xl font-bold text-green-400">
-                                        {loading ? "..." : registrations.length}
+                                        {loading ? "..." : ongoingCount}
                                     </div>
                                 </div>
                                 <Users className="text-green-400 w-8 h-8" />
@@ -246,8 +266,8 @@ const page = () => {
                             {/* Wins Card */}
                             <div className="bg-[#181c23] border-2 border-[#232935] rounded-md p-4 flex items-center justify-between transition-all duration-300 hover:shadow-[0_0_24px_4px_rgba(251,191,36,0.15)] hover:border-yellow-400/30">
                                 <div>
-                                    <div className="text-gray-300 text-sm">Wins</div>
-                                    <div className="text-3xl font-bold text-yellow-400">1</div>
+                                    <div className="text-gray-300 text-sm">Shortlisted</div>
+                                    <div className="text-3xl font-bold text-yellow-400">{loading ? "..." : wins}</div>
                                 </div>
                                 <Trophy className="text-yellow-400 w-8 h-8" />
                             </div>

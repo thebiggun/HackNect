@@ -259,7 +259,7 @@ const HackathonDetail = () => {
                         <div className="flex items-center gap-4">
                             <button 
                                 onClick={() => router.back()}
-                                className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors"
+                                className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors cursor-pointer"
                             >
                                 <ArrowLeft className="w-5 h-5 text-white" />
                             </button>
@@ -277,7 +277,7 @@ const HackathonDetail = () => {
                                 {!isEditing ? (
                                     <button 
                                         onClick={() => setIsEditing(true)}
-                                        className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#ff6a00] to-[#ee0979] text-white font-semibold rounded-lg hover:from-[#ee0979] hover:to-[#ff6a00] transition-all duration-200"
+                                        className="cursor-pointer flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#ff6a00] to-[#ee0979] text-white font-semibold rounded-lg hover:from-[#ee0979] hover:to-[#ff6a00] transition-all duration-200"
                                     >
                                         <Edit className="w-4 h-4" />
                                         Edit
@@ -302,14 +302,14 @@ const HackathonDetail = () => {
                                                     timeline: hackathon.timeline || '',
                                                 });
                                             }}
-                                            className="px-4 py-2 border border-white/30 text-white font-semibold rounded-lg hover:bg-white/10 transition-all duration-200"
+                                            className="px-4 py-2 border cursor-pointer border-white/30 text-white font-semibold rounded-lg hover:bg-white/10 transition-all duration-200"
                                         >
                                             Cancel
                                         </button>
                                         <button 
                                             onClick={handleSubmit}
                                             disabled={saving}
-                                            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white font-semibold rounded-lg hover:from-green-600 hover:to-green-700 transition-all duration-200 disabled:opacity-50"
+                                            className="flex items-center cursor-pointer gap-2 px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white font-semibold rounded-lg hover:from-green-600 hover:to-green-700 transition-all duration-200 disabled:opacity-50"
                                         >
                                             <Save className="w-4 h-4" />
                                             {saving ? 'Saving...' : 'Save'}

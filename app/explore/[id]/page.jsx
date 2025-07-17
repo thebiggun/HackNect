@@ -149,7 +149,7 @@ const HackathonDetail = () => {
                     <div className="flex flex-col md:flex-row md:items-center gap-4 mb-6">
                         <button
                             onClick={() => router.push('/explore')}
-                            className="flex items-center gap-2 text-white hover:text-gray-300 transition-colors"
+                            className="flex items-center gap-2 text-white hover:text-gray-300 cursor-pointer transition-colors"
                         >
                             <ArrowLeft className="w-5 h-5" />
                             <span>Back to Explore</span>
@@ -282,7 +282,7 @@ const HackathonDetail = () => {
                                 <button
                                     onClick={() => router.push(`/explore/${params.id}/register`)}
                                     disabled={getTimeRemaining(hackathon.registration_deadline) === 'Registration Closed'}
-                                    className={`w-full py-3 font-semibold rounded-lg transition-all duration-200 transform ${getTimeRemaining(hackathon.registration_deadline) === 'Registration Closed'
+                                    className={`w-full py-3 font-semibold rounded-lg transition-all duration-200 transform cursor-pointer ${getTimeRemaining(hackathon.registration_deadline) === 'Registration Closed'
                                             ? 'bg-gray-600 text-gray-400 cursor-not-allowed opacity-50'
                                             : 'bg-gradient-to-r from-[#ff6a00] to-[#ee0979] text-white hover:from-[#ee0979] hover:to-[#ff6a00] hover:scale-105'
                                         }`}
