@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import BackgroundEffects from "@/components/Background";
 import { Calendar, Users, MapPin, Trophy, Clock, Edit, Save, ArrowLeft, Upload, X, Crown, User } from "lucide-react";
+import Loader from '@/components/Loader';
 
 const HackathonDetail = () => {
     const params = useParams();
@@ -16,9 +17,16 @@ const HackathonDetail = () => {
     const [formData, setFormData] = useState({});
     const [bannerPreview, setBannerPreview] = useState(null);
     const [pfpPreview, setPfpPreview] = useState(null);
-    const [activeTab, setActiveTab] = useState('details'); // 'details' or 'registrations'
+    const [activeTab, setActiveTab] = useState('details'); // 'details', 'registrations', or 'shortlisted'
     const [registrations, setRegistrations] = useState([]);
     const [registrationsLoading, setRegistrationsLoading] = useState(false);
+    const [pdfUrls, setPdfUrls] = useState([]); // For displaying collected PDF URLs
+    const [shortlisted, setShortlisted] = useState([]);
+    const [shortlisting, setShortlisting] = useState(false);
+    const [shortlistError, setShortlistError] = useState(null);
+    const [shortlistedTeams, setShortlistedTeams] = useState([]);
+    const [shortlistedLoading, setShortlistedLoading] = useState(false);
+    const [shortlistedError, setShortlistedError] = useState(null);
 
     useEffect(() => {
         if (params.id) {
@@ -31,6 +39,32 @@ const HackathonDetail = () => {
             fetchRegistrations();
         }
     }, [activeTab, isCreator]);
+
+    // Fetch shortlisted teams
+    const fetchShortlistedTeams = async () => {
+        try {
+            setShortlistedLoading(true);
+            setShortlistedError(null);
+            const response = await fetch(`/api/hackathons/${params.id}/shortlisted`);
+            const data = await response.json();
+            if (data.success) {
+                setShortlistedTeams(data.data);
+            } else {
+                setShortlistedError(data.error || 'Failed to fetch shortlisted teams');
+            }
+        } catch (err) {
+            setShortlistedError('Failed to fetch shortlisted teams');
+        } finally {
+            setShortlistedLoading(false);
+        }
+    };
+
+    // Fetch shortlisted teams when tab is active
+    useEffect(() => {
+        if (activeTab === 'shortlisted' && isCreator) {
+            fetchShortlistedTeams();
+        }
+    }, [activeTab, isCreator, params.id]);
 
     const fetchRegistrations = async () => {
         try {
@@ -314,6 +348,24 @@ const HackathonDetail = () => {
                                         {registrations.length > 0 && (
                                             <span className="bg-white/20 text-white text-xs px-2 py-1 rounded-full">
                                                 {registrations.length}
+                                            </span>
+                                        )}
+                                    </div>
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab('shortlisted')}
+                                    className={`flex-1 px-6 py-3 rounded-lg font-semibold transition-all duration-200 ${
+                                        activeTab === 'shortlisted'
+                                            ? 'bg-gradient-to-r from-[#ff6a00] to-[#ee0979] text-white shadow-lg'
+                                            : 'text-gray-300 hover:text-white hover:bg-white/10'
+                                    }`}
+                                >
+                                    <div className="flex items-center justify-center gap-2">
+                                        <Trophy className="w-4 h-4" />
+                                        Shortlisted
+                                        {shortlistedTeams.length > 0 && (
+                                            <span className="bg-white/20 text-white text-xs px-2 py-1 rounded-full">
+                                                {shortlistedTeams.length}
                                             </span>
                                         )}
                                     </div>
@@ -603,6 +655,354 @@ const HackathonDetail = () => {
                                 </div>
                             </div>
                         </>
+                    ) : activeTab === 'registrations' ? (
+                        /* Registrations Tab Content */
+                        <div className="space-y-6">
+                            {/* Stats Cards */}
+                            <div className="grid gap-6 md:grid-cols-4">
+                                <div className="bg-gradient-to-br from-blue-500/20 to-blue-600/20 border border-blue-500/30 rounded-xl p-6">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-3 bg-blue-500/20 rounded-lg">
+                                            <Users className="w-6 h-6 text-blue-400" />
+                                        </div>
+                                        <div>
+                                            <p className="text-blue-300 text-sm">Total Teams</p>
+                                            <p className="text-2xl font-bold text-white">{registrations.length}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div className="bg-gradient-to-br from-green-500/20 to-green-600/20 border border-green-500/30 rounded-xl p-6">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-3 bg-green-500/20 rounded-lg">
+                                            <Users className="w-6 h-6 text-green-400" />
+                                        </div>
+                                        <div>
+                                            <p className="text-green-300 text-sm">Total Participants</p>
+                                            <p className="text-2xl font-bold text-white">
+                                                {registrations.reduce((total, reg) => {
+                                                    const filteredTeammates = reg.teammates?.filter(t => t.id !== reg.team_leader?.id) || [];
+                                                    return total + 1 + filteredTeammates.length;
+                                                }, 0)}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div className="bg-gradient-to-br from-purple-500/20 to-purple-600/20 border border-purple-500/30 rounded-xl p-6">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-3 bg-purple-500/20 rounded-lg">
+                                            <Clock className="w-6 h-6 text-purple-400" />
+                                        </div>
+                                        <div>
+                                            <p className="text-purple-300 text-sm">Avg Team Size</p>
+                                            <p className="text-2xl font-bold text-white">
+                                                {registrations.length > 0 
+                                                    ? Math.round((registrations.reduce((total, reg) => {
+                                                        const filteredTeammates = reg.teammates?.filter(t => t.id !== reg.team_leader?.id) || [];
+                                                        return total + 1 + filteredTeammates.length;
+                                                    }, 0) / registrations.length) * 10) / 10
+                                                    : 0
+                                                }
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div className="bg-gradient-to-br from-orange-500/20 to-orange-600/20 border border-orange-500/30 rounded-xl p-6">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-3 bg-orange-500/20 rounded-lg">
+                                            <Clock className="w-6 h-6 text-orange-400" />
+                                        </div>
+                                        <div>
+                                            <p className="text-orange-300 text-sm">Latest Registration</p>
+                                            <p className="text-sm font-semibold text-white">
+                                                {registrations.length > 0 ? formatDate(registrations[0].submitted_at) : 'None'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Registrations List */}
+                            <div className="bg-white/10 border border-white/20 rounded-xl p-6">
+                                <div className="flex items-center justify-between mb-6">
+                                    <h2 className="text-2xl font-bold text-white">Team Registrations</h2>
+                                    <button
+                                        onClick={fetchRegistrations}
+                                        disabled={registrationsLoading}
+                                        className="px-4 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20 transition-colors disabled:opacity-50"
+                                    >
+                                        {registrationsLoading ? 'Refreshing...' : 'Refresh'}
+                                    </button>
+                                </div>
+
+                                {registrationsLoading ? (
+                                    <div className="flex items-center justify-center py-12">
+                                        <div className="text-white text-lg">Loading registrations...</div>
+                                    </div>
+                                ) : registrations.length === 0 ? (
+                                    <div className="text-center py-12">
+                                        <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                                        <h3 className="text-xl font-semibold text-white mb-2">No Registrations Yet</h3>
+                                        <p className="text-gray-300">Teams haven't started registering for your hackathon yet.</p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-4">
+                                        {registrations.map((registration, index) => {
+                                            // Filter teammates to exclude the team leader
+                                            const filteredTeammates = registration.teammates?.filter(
+                                                (teammate) => teammate.id !== registration.team_leader?.id
+                                            ) || [];
+                                            const memberCount = 1 + filteredTeammates.length;
+                                            return (
+                                                <div 
+                                                    key={registration.id}
+                                                    className="bg-white/5 border border-white/10 rounded-xl p-6 hover:bg-white/10 transition-all duration-200"
+                                                >
+                                                    <div className="flex items-start justify-between mb-4">
+                                                        <div className="flex-1">
+                                                            <div className="flex items-center gap-3 mb-2">
+                                                                <div className="w-8 h-8 bg-gradient-to-r from-[#ff6a00] to-[#ee0979] rounded-full flex items-center justify-center text-white font-bold text-sm">
+                                                                    {index + 1}
+                                                                </div>
+                                                                <h3 className="text-xl font-bold text-white">{registration.team_name}</h3>
+                                                                <div className="px-3 py-1 bg-green-500/20 border border-green-500/30 rounded-full">
+                                                                    <span className="text-green-400 text-sm font-medium">
+                                                                        {memberCount} members
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex items-center gap-4 text-sm text-gray-300">
+                                                                <span className="flex items-center gap-1">
+                                                                    <Calendar className="w-4 h-4" />
+                                                                    Registered: {formatDate(registration.submitted_at)}
+                                                                </span>
+                                                                <span className="flex items-center gap-1">
+                                                                    <Crown className="w-4 h-4" />
+                                                                    Leader: {registration.team_leader?.name || 'Unknown'}
+                                                                </span>
+                                                            </div>
+                                                            {/* PDF Submission Info */}
+                                                            <div className="mt-2 text-sm">
+                                                                <span className="font-semibold text-gray-300">Project PDF: </span>
+                                                                {registration.idea_pdf_url ? (
+                                                                    <a href={registration.idea_pdf_url} target="_blank" rel="noopener noreferrer" className="text-cyan-400 underline">View PDF</a>
+                                                                ) : (
+                                                                    <span className="text-red-400">Not submitted</span>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Team Members */}
+                                                    <div className="space-y-3">
+                                                        <h4 className="text-sm font-semibold text-gray-300 uppercase tracking-wide">Team Members</h4>
+                                                        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+                                                            {/* Team Leader as first member */}
+                                                            <div className="bg-white/10 border border-white/20 rounded-lg p-4">
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="w-10 h-10 bg-gradient-to-r from-[#ff6a00] to-[#ee0979] rounded-full flex items-center justify-center">
+                                                                        <Crown className="w-5 h-5 text-white" />
+                                                                    </div>
+                                                                    <div className="flex-1">
+                                                                        <p className="font-semibold text-white">{registration.team_leader?.name || 'Unknown'}</p>
+                                                                        <p className="text-sm text-gray-400">Team Leader</p>
+                                                                        <p className="text-xs text-gray-500">{registration.team_leader?.email || 'No email'}</p>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            {/* Teammates (excluding leader) */}
+                                                            {filteredTeammates.map((teammate) => (
+                                                                <div key={teammate.id} className="bg-white/10 border border-white/20 rounded-lg p-4">
+                                                                    <div className="flex items-center gap-3">
+                                                                        <div className="w-10 h-10 bg-gradient-to-br from-slate-600 to-slate-700 rounded-full flex items-center justify-center">
+                                                                            <User className="w-5 h-5 text-white" />
+                                                                        </div>
+                                                                        <div className="flex-1">
+                                                                            <p className="font-semibold text-white">{teammate.name}</p>
+                                                                            <p className="text-sm text-gray-400">Teammate</p>
+                                                                            <p className="text-xs text-gray-500">{teammate.email}</p>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    ) : activeTab === 'shortlisted' && isCreator ? (
+                        <div className="space-y-6">
+                            {/* Shortlist Button */}
+                            <div className="mb-4">
+                                {/* Shortlist Best Ideas Button - only in Shortlisted tab */}
+                                <div className="flex flex-col gap-2 items-start">
+                                    <button
+                                        onClick={async () => {
+                                            setShortlisting(true);
+                                            setShortlistError(null);
+                                            try {
+                                                // Collect all valid PDF URLs from registrations
+                                                const urls = registrations
+                                                    .map(r => r.idea_pdf_url)
+                                                    .filter(url => url && url.trim() !== '');
+                                                if (!urls.length) {
+                                                    setShortlistError('No valid PDF URLs found.');
+                                                    setShortlisting(false);
+                                                    return;
+                                                }
+                                                const response = await fetch('/api/shortlist-ideas', {
+                                                    method: 'POST',
+                                                    headers: { 'Content-Type': 'application/json' },
+                                                    body: JSON.stringify({ pdfUrls: urls, n: Number(hackathon.top_n_selections) })
+                                                });
+                                                const data = await response.json();
+                                                // Refetch shortlisted teams after shortlisting
+                                                fetchShortlistedTeams();
+                                                if (!data.shortlisted) {
+                                                    setShortlistError('No shortlist returned.');
+                                                }
+                                            } catch (err) {
+                                                setShortlistError('Failed to shortlist ideas.');
+                                            } finally {
+                                                setShortlisting(false);
+                                            }
+                                        }}
+                                        disabled={
+                                            shortlisting ||
+                                            !hackathon.top_n_selections ||
+                                            isNaN(Number(hackathon.top_n_selections)) ||
+                                            Number(hackathon.top_n_selections) < 1
+                                        }
+                                        className="px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white font-semibold rounded-lg hover:from-green-600 hover:to-green-700 transition-all duration-200 disabled:opacity-50"
+                                    >
+                                        {shortlisting
+                                            ? <><Loader size={18} className="mr-2 align-middle" /> Shortlisting...</>
+                                            : `Shortlist Best ${hackathon.top_n_selections || ''} Ideas`}
+                                    </button>
+                                </div>
+                                {/* Display loading/error only, not the list */}
+                                {shortlisting && (
+                                    <div className="mt-4 text-white">Shortlisting ideas, please wait...</div>
+                                )}
+                                {shortlistError && (
+                                    <div className="mt-4 text-red-400">{shortlistError}</div>
+                                )}
+                            </div>
+                            {/* Shortlisted Teams List */}
+                            <div className="bg-white/10 border border-white/20 rounded-xl p-6">
+                                <div className="flex items-center justify-between mb-6">
+                                    <h2 className="text-2xl font-bold text-white">Shortlisted Teams</h2>
+                                    <button
+                                        onClick={fetchShortlistedTeams}
+                                        disabled={shortlistedLoading}
+                                        className="px-4 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20 transition-colors disabled:opacity-50"
+                                    >
+                                        {shortlistedLoading ? 'Refreshing...' : 'Refresh'}
+                                    </button>
+                                </div>
+                                {shortlistedLoading ? (
+                                    <div className="flex items-center justify-center py-12">
+                                        <div className="text-white text-lg">Loading shortlisted teams...</div>
+                                    </div>
+                                ) : shortlistedTeams.length === 0 ? (
+                                    <div className="text-center py-12">
+                                        <Trophy className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                                        <h3 className="text-xl font-semibold text-white mb-2">No Teams Shortlisted Yet</h3>
+                                        <p className="text-gray-300">Run the shortlisting to select the best teams.</p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-4">
+                                        {shortlistedTeams.map((registration, index) => {
+                                            const filteredTeammates = registration.teammates?.filter(
+                                                (teammate) => teammate.id !== registration.team_leader?.id
+                                            ) || [];
+                                            const memberCount = 1 + filteredTeammates.length;
+                                            return (
+                                                <div 
+                                                    key={registration.id}
+                                                    className="bg-white/5 border border-white/10 rounded-xl p-6 hover:bg-white/10 transition-all duration-200"
+                                                >
+                                                    <div className="flex items-start justify-between mb-4">
+                                                        <div className="flex-1">
+                                                            <div className="flex items-center gap-3 mb-2">
+                                                                <div className="w-8 h-8 bg-gradient-to-r from-[#ff6a00] to-[#ee0979] rounded-full flex items-center justify-center text-white font-bold text-sm">
+                                                                    {index + 1}
+                                                                </div>
+                                                                <h3 className="text-xl font-bold text-white">{registration.team_name}</h3>
+                                                                <div className="px-3 py-1 bg-green-500/20 border border-green-500/30 rounded-full">
+                                                                    <span className="text-green-400 text-sm font-medium">
+                                                                        {memberCount} members
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex items-center gap-4 text-sm text-gray-300">
+                                                                <span className="flex items-center gap-1">
+                                                                    <Calendar className="w-4 h-4" />
+                                                                    Registered: {formatDate(registration.submitted_at)}
+                                                                </span>
+                                                                <span className="flex items-center gap-1">
+                                                                    <Crown className="w-4 h-4" />
+                                                                    Leader: {registration.team_leader?.name || 'Unknown'}
+                                                                </span>
+                                                            </div>
+                                                            {/* PDF Submission Info */}
+                                                            <div className="mt-2 text-sm">
+                                                                <span className="font-semibold text-gray-300">Project PDF: </span>
+                                                                {registration.idea_pdf_url ? (
+                                                                    <a href={registration.idea_pdf_url} target="_blank" rel="noopener noreferrer" className="text-cyan-400 underline">View PDF</a>
+                                                                ) : (
+                                                                    <span className="text-red-400">Not submitted</span>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    {/* Team Members */}
+                                                    <div className="space-y-3">
+                                                        <h4 className="text-sm font-semibold text-gray-300 uppercase tracking-wide">Team Members</h4>
+                                                        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+                                                            {/* Team Leader as first member */}
+                                                            <div className="bg-white/10 border border-white/20 rounded-lg p-4">
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="w-10 h-10 bg-gradient-to-r from-[#ff6a00] to-[#ee0979] rounded-full flex items-center justify-center">
+                                                                        <Crown className="w-5 h-5 text-white" />
+                                                                    </div>
+                                                                    <div className="flex-1">
+                                                                        <p className="font-semibold text-white">{registration.team_leader?.name || 'Unknown'}</p>
+                                                                        <p className="text-sm text-gray-400">Team Leader</p>
+                                                                        <p className="text-xs text-gray-500">{registration.team_leader?.email || 'No email'}</p>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            {/* Teammates (excluding leader) */}
+                                                            {filteredTeammates.map((teammate) => (
+                                                                <div key={teammate.id} className="bg-white/10 border border-white/20 rounded-lg p-4">
+                                                                    <div className="flex items-center gap-3">
+                                                                        <div className="w-10 h-10 bg-gradient-to-br from-slate-600 to-slate-700 rounded-full flex items-center justify-center">
+                                                                            <User className="w-5 h-5 text-white" />
+                                                                        </div>
+                                                                        <div className="flex-1">
+                                                                            <p className="font-semibold text-white">{teammate.name}</p>
+                                                                            <p className="text-sm text-gray-400">Teammate</p>
+                                                                            <p className="text-xs text-gray-500">{teammate.email}</p>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
                     ) : (
                         /* Registrations Tab Content */
                         <div className="space-y-6">
@@ -730,6 +1130,15 @@ const HackathonDetail = () => {
                                                                     <Crown className="w-4 h-4" />
                                                                     Leader: {registration.team_leader?.name || 'Unknown'}
                                                                 </span>
+                                                            </div>
+                                                            {/* PDF Submission Info */}
+                                                            <div className="mt-2 text-sm">
+                                                                <span className="font-semibold text-gray-300">Project PDF: </span>
+                                                                {registration.idea_pdf_url ? (
+                                                                    <a href={registration.idea_pdf_url} target="_blank" rel="noopener noreferrer" className="text-cyan-400 underline">View PDF</a>
+                                                                ) : (
+                                                                    <span className="text-red-400">Not submitted</span>
+                                                                )}
                                                             </div>
                                                         </div>
                                                     </div>

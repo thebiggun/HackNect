@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Background from "@/components/Background";
 import { Calendar, Users, MapPin, Trophy, Clock, ArrowLeft, User, Share2, Bookmark, ExternalLink } from "lucide-react";
+import Loader from '@/components/Loader';
 
 const HackathonDetail = () => {
     const params = useParams();
@@ -10,6 +11,7 @@ const HackathonDetail = () => {
     const [hackathon, setHackathon] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [navLoading, setNavLoading] = useState(false);
 
     useEffect(() => {
         if (params.id) {
@@ -153,11 +155,6 @@ const HackathonDetail = () => {
                             <span>Back to Explore</span>
                         </button>
                     </div>
-                    <div>
-                        <span className="text-3xl font-semibold text-white">
-                            {hackathon.title}
-                        </span>
-                    </div>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -294,9 +291,6 @@ const HackathonDetail = () => {
                                         ? 'Registration Closed'
                                         : 'Register for Teams'
                                     }
-                                </button>
-                                <button className="w-full py-3 border border-white/30 text-white font-semibold rounded-lg hover:bg-white/10 transition-all duration-200">
-                                    Contact Organizer
                                 </button>
                             </div>
                         </div>

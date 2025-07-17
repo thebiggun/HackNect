@@ -1,14 +1,15 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import BackgroundEffects from "@/components/Background";
 import { Calendar, Users, MapPin, Trophy, Clock, Edit, Eye, Info } from "lucide-react";
+import Loader from '@/components/Loader';
 
 const CreatorDash = () => {
     const router = useRouter();
     const [hackathons, setHackathons] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [navLoading, setNavLoading] = useState(false);
 
     useEffect(() => {
         fetchHackathons();
@@ -44,18 +45,24 @@ const CreatorDash = () => {
         });
     };
 
-    const handleHackathonClick = (hackathonId) => {
-        router.push(`/creator-dash/${hackathonId}`);
+    const handleHackathonClick = async (hackathonId) => {
+        setNavLoading(true);
+        await router.push(`/creator-dash/${hackathonId}`);
+        setNavLoading(false);
     };
 
-    const handleViewDetails = (e, hackathonId) => {
+    const handleViewDetails = async (e, hackathonId) => {
         e.stopPropagation();
-        router.push(`/creator-dash/${hackathonId}`);
+        setNavLoading(true);
+        await router.push(`/creator-dash/${hackathonId}`);
+        setNavLoading(false);
     };
 
-    const handleEditHackathon = (e, hackathonId) => {
+    const handleEditHackathon = async (e, hackathonId) => {
         e.stopPropagation();
-        router.push(`/creator-dash/${hackathonId}`);
+        setNavLoading(true);
+        await router.push(`/creator-dash/${hackathonId}`);
+        setNavLoading(false);
     };
 
     // Helper to get registration status and days left for a hackathon
@@ -70,25 +77,16 @@ const CreatorDash = () => {
 
     if (loading) {
         return (
-            <div>
-                <div className="fixed inset-0 z-0 overflow-hidden">
-                    <BackgroundEffects />
-                </div>
-                <div className="relative w-full p-8 pt-0">
-                    <div className="flex items-center justify-center min-h-[60vh]">
-                        <div className="text-white text-xl">Loading your hackathons...</div>
-                    </div>
+            <div className="relative w-full p-8 pt-0">
+                <div className="flex items-center justify-center min-h-[60vh]">
+                    <div className="text-white text-xl">Loading your hackathons...</div>
                 </div>
             </div>
         );
     }
 
     return (
-        <div>
-            <div className="fixed inset-0 z-0 overflow-hidden">
-                <BackgroundEffects />
-            </div>
-            <div className="relative w-full p-4 sm:p-6 md:p-8 pt-0">
+        <div className="relative w-full p-4 sm:p-6 md:p-8 pt-0">
                 <div className="px-2 sm:px-4 md:px-6">
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4 md:gap-0">
                         <div>
@@ -266,25 +264,7 @@ const CreatorDash = () => {
                                             )}
                                         </div>
 
-                                        {/* Action Buttons */}
-                                        <div className="flex gap-3 mt-6">
-                                            <button 
-                                                className="flex-1 py-2 px-4 bg-gradient-to-r from-[#ff6a00] to-[#ee0979] text-white font-semibold rounded-lg hover:from-[#ee0979] hover:to-[#ff6a00] transition-all duration-200 relative group/tooltip"
-                                                onClick={(e) => handleViewDetails(e, hackathon.id)}
-                                            >
-                                                View Details
-                                                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-black/90 text-white text-sm rounded-lg opacity-0 group-hover/tooltip:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
-                                                    View full hackathon details
-                                                    <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-black/90"></div>
-                                                </div>
-                                            </button>
-                                            <button 
-                                                className="py-2 px-4 border border-white/30 text-white font-semibold rounded-lg hover:bg-white/10 transition-all duration-200 relative group/tooltip"
-                                                onClick={(e) => handleEditHackathon(e, hackathon.id)}
-                                            >
-                                                Edit
-                                            </button>
-                                        </div>
+                                        {/* Action Buttons - REMOVED: Redundant with card click and top-right buttons */}
                                     </div>
                                 </div>
                             ))}
@@ -292,7 +272,6 @@ const CreatorDash = () => {
                     )}
                 </div>
             </div>
-        </div>
     );
 };
 

@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
-import Background from "@/components/Background";
 import { useRouter } from "next/navigation";
+import Loader from '@/components/Loader';
 
 const HackathonForm = () => {
     const router = useRouter();
@@ -23,6 +23,7 @@ const HackathonForm = () => {
         pfp_url: null,
         pfpPreview: "./user.png",
     });
+    const [submitting, setSubmitting] = useState(false);
 
     // Major Indian cities
     const indianCities = [
@@ -96,6 +97,7 @@ const HackathonForm = () => {
         formData.append("venue", venueString);
 
         try {
+            setSubmitting(true);
             const res = await fetch("/api/hackathons", {
                 method: "POST",
                 body: formData,
@@ -109,6 +111,8 @@ const HackathonForm = () => {
             }
         } catch (err) {
             alert("Submission failed: " + err.message);
+        } finally {
+            setSubmitting(false);
         }
     };
 
@@ -237,7 +241,9 @@ const HackathonForm = () => {
                     </div>
                 </div>
                 <div className="pt-4">
-                    <button type="submit" className="w-full py-3 rounded-lg font-bold text-lg bg-gradient-to-r from-[#ff6a00] to-[#ee0979] text-white shadow-lg hover:from-[#ee0979] hover:to-[#ff6a00] transition-all duration-200 cursor-pointer">Create Hackathon</button>
+                    <button type="submit" className="w-full py-3 rounded-lg font-bold text-lg bg-gradient-to-r from-[#ff6a00] to-[#ee0979] text-white shadow-lg hover:from-[#ee0979] hover:to-[#ff6a00] transition-all duration-200 cursor-pointer" disabled={submitting}>
+                        {submitting ? <Loader size={20} className="mr-2 align-middle" /> : 'Create Hackathon'}
+                    </button>
                 </div>
             </form>
         </div>
@@ -246,25 +252,20 @@ const HackathonForm = () => {
 
 const page = () => {
     return (
-        <div>
-            <div className="fixed inset-0 z-0 overflow-hidden">
-                <Background />
-            </div>
-            <div className='relative w-full p-8 pt-0'>
-                <div className="px-6">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <span className="text-3xl font-semibold text-white">
-                                Host a
-                            </span>
-                            <span className="ml-2 text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#ff6a00] to-[#ee0979]">
-                                Hackathon
-                            </span>
-                        </div>
+        <div className='relative w-full p-8 pt-0'>
+            <div className="px-6">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <span className="text-3xl font-semibold text-white">
+                            Host a
+                        </span>
+                        <span className="ml-2 text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#ff6a00] to-[#ee0979]">
+                            Hackathon
+                        </span>
                     </div>
                 </div>
-                <HackathonForm />
             </div>
+            <HackathonForm />
         </div>
     )
 }

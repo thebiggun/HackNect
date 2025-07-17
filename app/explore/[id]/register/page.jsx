@@ -436,7 +436,7 @@ const HackathonTeamRegistration = () => {
                                             
                                             <div className="flex gap-2">
                                                 <button
-                                                    onClick={() => router.push(`/registrations/${registration.id}`)}
+                                                    onClick={() => router.push(`/registration/${registration.id}`)}
                                                     className="text-cyan-400 hover:text-cyan-300 text-sm font-medium transition-colors"
                                                 >
                                                     View Registration Details →
