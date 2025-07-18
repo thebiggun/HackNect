@@ -53,9 +53,19 @@ const Navbar = () => {
                             <UserButton appearance={{ elements: { avatarBox: 'w-12 h-12' } }} />
                         </div>
                     ) : (
-                        <SignInButton>
-                            <button className="text-white font-bold bg-gradient-to-r to-pink-500 via-purple-500 from-blue-500 py-2 px-4 rounded-md cursor-pointer hover:bg-gradient-to-l transition-all duration-200 hover:scale-105">Get Started</button>
-                        </SignInButton>
+                        <>
+                            <Link href="/" className="group relative inline-block text-md font-semibold text-transparent bg-[linear-gradient(to_right,_theme(colors.green.500)_50%,_white_50%)] bg-[length:200%_100%] bg-[100%_0%] hover:bg-[0%_0%] bg-clip-text transition-all duration-300 mr-4">
+                                Home
+                                <span className="absolute bottom-0 right-0 h-[2px] bg-green-500 w-0 group-hover:w-full transition-all duration-300 origin-right" />
+                            </Link>
+                            <Link href="/explore" className="group relative inline-block text-md font-semibold text-transparent bg-[linear-gradient(to_right,_theme(colors.orange.500)_50%,_white_50%)] bg-[length:200%_100%] bg-[100%_0%] hover:bg-[0%_0%] bg-clip-text transition-all duration-300 mr-4">
+                                Explore
+                                <span className="absolute bottom-0 right-0 h-[2px] bg-orange-500 w-0 group-hover:w-full transition-all duration-300 origin-right" />
+                            </Link>
+                            <SignInButton>
+                                <button className="text-white font-bold bg-gradient-to-r to-pink-500 via-purple-500 from-blue-500 py-2 px-4 rounded-md cursor-pointer hover:bg-gradient-to-l transition-all duration-200 hover:scale-105">Get Started</button>
+                            </SignInButton>
+                        </>
                     )}
                 </div>
             </div>
@@ -72,9 +82,13 @@ const Navbar = () => {
                             </div>
                         </>
                     ) : (
-                        <SignInButton>
-                            <button className="text-white font-bold bg-gradient-to-r to-pink-500 via-purple-500 from-blue-500 py-2 px-4 rounded-md cursor-pointer hover:bg-gradient-to-l transition-all duration-200 hover:scale-105 w-full">Get Started</button>
-                        </SignInButton>
+                        <>
+                            <Link href="/" className="text-md font-semibold text-white py-2" onClick={() => setMenuOpen(false)}>Home</Link>
+                            <Link href="/explore" className="text-md font-semibold text-white py-2" onClick={() => setMenuOpen(false)}>Explore</Link>
+                            <SignInButton>
+                                <button className="text-white font-bold bg-gradient-to-r to-pink-500 via-purple-500 from-blue-500 py-2 px-4 rounded-md cursor-pointer hover:bg-gradient-to-l transition-all duration-200 hover:scale-105 w-full">Get Started</button>
+                            </SignInButton>
+                        </>
                     )}
                 </div>
             )}
