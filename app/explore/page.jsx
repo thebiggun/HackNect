@@ -194,7 +194,7 @@ const ExplorePage = () => {
     return (
         <div className="relative w-full p-8 pt-0">
             <div className="px-2 sm:px-4 md:px-6">
-                <div className="flex items-center justify-between mb-8">
+                <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-0">
                     <div>
                         <span className="text-3xl font-semibold text-white">
                             Explore

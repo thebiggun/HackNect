@@ -20,7 +20,6 @@ const Navbar = () => {
                         HackNect
                     </h1>
                 </div>
-                {/* Hamburger for mobile */}
                 <button
                     className="sm:hidden flex items-center justify-center p-2 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-pink-400"
                     onClick={() => setMenuOpen((open) => !open)}
@@ -34,7 +33,6 @@ const Navbar = () => {
                         )}
                     </svg>
                 </button>
-                {/* Desktop nav */}
                 <div className="hidden sm:flex items-center">
                     {isSignedIn ? (
                         <div className="flex items-center gap-4">
@@ -69,7 +67,6 @@ const Navbar = () => {
                     )}
                 </div>
             </div>
-            {/* Mobile nav menu */}
             {menuOpen && (
                 <div className="sm:hidden flex flex-col gap-4 mt-2 border border-white/20 bg-white/10 backdrop-blur-[2px] rounded-md py-4 px-4 shadow-lg animate-fade-in">
                     {isSignedIn ? (

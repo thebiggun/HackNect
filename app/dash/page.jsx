@@ -179,7 +179,7 @@ const page = () => {
                                                     key={registration.id}
                                                     className={`bg-[#181c23] border-2 rounded-lg p-4 transition-all duration-300 ${borderColor} ${shadowColor}`}
                                                 >
-                                                    <div className="flex items-center justify-between">
+                                                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                                                         <div className="flex-1">
                                                             <h3 className="text-lg font-semibold text-white mb-1">
                                                                 {registration.hackathons?.title || 'Unknown Hackathon'}
@@ -193,13 +193,14 @@ const page = () => {
                                                                     <Calendar className="w-4 h-4" />
                                                                     {formatDate(registration.created_at)}
                                                                 </span>
-                                                                {/* Status text */}
-                                                                <span className={`ml-2 px-2 py-1 rounded text-xs font-bold
+                                                            </div>
+                                                            <div className="flex flex-col sm:flex-row gap-2 mt-2">
+                                                                <span className={`px-2 py-1 rounded text-xs font-bold
                                                                     ${hasIdeaPdf ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}
                                                                 `}>
                                                                     {hasIdeaPdf ? "Idea PDF Uploaded" : "No Idea PDF"}
                                                                 </span>
-                                                                <span className={`ml-2 px-2 py-1 rounded text-xs font-bold
+                                                                <span className={`px-2 py-1 rounded text-xs font-bold
                                                                     ${expired ? "bg-yellow-500/20 text-yellow-400" : "bg-blue-500/20 text-blue-400"}
                                                                 `}>
                                                                     {expired ? "Expired" : "Ongoing"}
