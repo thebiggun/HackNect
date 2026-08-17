@@ -214,13 +214,13 @@ const RegistrationDetailPage = () => {
                             {leader && (
                                 <div className="bg-white/10 border border-white/20 rounded-lg p-4">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 bg-gradient-to-r from-[#ff6a00] to-[#ee0979] rounded-full flex items-center justify-center">
+                                        <div className="w-10 h-10 bg-gradient-to-r from-[#ff6a00] to-[#ee0979] rounded-full flex items-center justify-center shrink-0">
                                             <Crown className="w-5 h-5 text-white" />
                                         </div>
-                                        <div className="flex-1">
-                                            <p className="font-semibold text-white">{leader.name}</p>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="font-semibold text-white truncate" title={leader.name}>{leader.name}</p>
                                             <p className="text-sm text-gray-400">Team Leader</p>
-                                            <p className="text-xs text-gray-500">{leader.email}</p>
+                                            <p className="text-xs text-gray-500 truncate" title={leader.email}>{leader.email}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -229,13 +229,13 @@ const RegistrationDetailPage = () => {
                             {otherTeammates.map((teammate) => (
                                 <div key={teammate.id} className="bg-white/10 border border-white/20 rounded-lg p-4">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 bg-gradient-to-br from-slate-600 to-slate-700 rounded-full flex items-center justify-center">
+                                        <div className="w-10 h-10 bg-gradient-to-br from-slate-600 to-slate-700 rounded-full flex items-center justify-center shrink-0">
                                             <User className="w-5 h-5 text-white" />
                                         </div>
-                                        <div className="flex-1">
-                                            <p className="font-semibold text-white">{teammate.name}</p>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="font-semibold text-white truncate" title={teammate.name}>{teammate.name}</p>
                                             <p className="text-sm text-gray-400">Teammate</p>
-                                            <p className="text-xs text-gray-500">{teammate.email}</p>
+                                            <p className="text-xs text-gray-500 truncate" title={teammate.email}>{teammate.email}</p>
                                         </div>
                                     </div>
                                 </div>

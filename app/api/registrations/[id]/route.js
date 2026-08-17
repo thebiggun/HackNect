@@ -1,9 +1,9 @@
 import supabase from '@/lib/supabase';
 import { auth } from '@clerk/nextjs/server';
 
-export async function GET(req, context) {
+export async function GET(req, { params }) {
     try {
-        const { params } = await context;
+        const { id } = await params;
         // Get the current user from Clerk
         const { userId } = await auth();
         
@@ -33,7 +33,7 @@ export async function GET(req, context) {
                     title
                 )
             `)
-            .eq('id', params.id)
+            .eq('id', id)
             .single();
 
         if (registrationError || !registration) {
@@ -76,9 +76,9 @@ export async function GET(req, context) {
     }
 } 
 
-export async function PUT(req, context) {
+export async function PUT(req, { params }) {
     try {
-        const { params } = await context;
+        const { id } = await params;
         const { userId } = await auth();
         if (!userId) {
             return new Response(JSON.stringify({ success: false, error: 'Unauthorized' }), { status: 401 });
@@ -96,7 +96,7 @@ export async function PUT(req, context) {
         const { data: registration, error: registrationError } = await supabase
             .from('registrations')
             .select('*')
-            .eq('id', params.id)
+            .eq('id', id)
             .single();
         if (registrationError || !registration) {
             return new Response(JSON.stringify({ success: false, error: 'Registration not found' }), { status: 404 });
@@ -111,7 +111,7 @@ export async function PUT(req, context) {
             return new Response(JSON.stringify({ success: false, error: 'No PDF file uploaded' }), { status: 400 });
         }
         const ext = pdfFile.name.split('.').pop();
-        const filePath = `pdfs/${params.id}_${Date.now()}.${ext}`;
+        const filePath = `pdfs/${id}_${Date.now()}.${ext}`;
         const { data: uploadData, error: uploadError } = await supabase.storage
             .from('registrations')
             .upload(filePath, pdfFile, { contentType: pdfFile.type });
@@ -122,7 +122,7 @@ export async function PUT(req, context) {
         const { error: updateError } = await supabase
             .from('registrations')
             .update({ idea_pdf_url: publicUrl })
-            .eq('id', params.id);
+            .eq('id', id);
         if (updateError) {
             return new Response(JSON.stringify({ success: false, error: 'Failed to update registration with PDF URL' }), { status: 500 });
         }

@@ -1,10 +1,9 @@
 import supabase from '@/lib/supabase';
 import { auth } from '@clerk/nextjs/server';
 
-export async function GET(req, context) {
+export async function GET(req, { params }) {
     try {
-        const { params } = await context;
-        const { id: hackathonId } = params;
+        const { id: hackathonId } = await params;
 
         // Get the current user from Clerk (optional: restrict to creator)
         const { userId } = await auth();

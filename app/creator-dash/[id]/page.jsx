@@ -71,7 +71,7 @@ const HackathonDetail = () => {
             setRegistrationsLoading(true);
             const response = await fetch(`/api/hackathons/${params.id}/registrations`);
             const data = await response.json();
-            
+
             if (data.success) {
                 setRegistrations(data.data);
             } else {
@@ -90,7 +90,7 @@ const HackathonDetail = () => {
             setLoading(true);
             const response = await fetch(`/api/hackathons/${params.id}`);
             const data = await response.json();
-            
+
             if (data.success) {
                 setHackathon(data.data);
                 setIsCreator(data.isCreator);
@@ -141,7 +141,7 @@ const HackathonDetail = () => {
 
         try {
             const submitData = new FormData();
-            
+
             // Add form fields
             Object.keys(formData).forEach(key => {
                 if (formData[key] !== '') {
@@ -166,7 +166,7 @@ const HackathonDetail = () => {
             });
 
             const data = await response.json();
-            
+
             if (data.success) {
                 setHackathon(data.data);
                 setIsEditing(false);
@@ -257,7 +257,7 @@ const HackathonDetail = () => {
                     {/* Header */}
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4 md:gap-0">
                         <div className="flex items-center gap-4">
-                            <button 
+                            <button
                                 onClick={() => router.back()}
                                 className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors cursor-pointer"
                             >
@@ -275,7 +275,7 @@ const HackathonDetail = () => {
                         {isCreator && (
                             <div className="flex gap-3">
                                 {!isEditing ? (
-                                    <button 
+                                    <button
                                         onClick={() => setIsEditing(true)}
                                         className="cursor-pointer flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#ff6a00] to-[#ee0979] text-white font-semibold rounded-lg hover:from-[#ee0979] hover:to-[#ff6a00] transition-all duration-200"
                                     >
@@ -284,7 +284,7 @@ const HackathonDetail = () => {
                                     </button>
                                 ) : (
                                     <>
-                                        <button 
+                                        <button
                                             onClick={() => {
                                                 setIsEditing(false);
                                                 setBannerPreview(null);
@@ -306,7 +306,7 @@ const HackathonDetail = () => {
                                         >
                                             Cancel
                                         </button>
-                                        <button 
+                                        <button
                                             onClick={handleSubmit}
                                             disabled={saving}
                                             className="flex items-center cursor-pointer gap-2 px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white font-semibold rounded-lg hover:from-green-600 hover:to-green-700 transition-all duration-200 disabled:opacity-50"
@@ -326,21 +326,19 @@ const HackathonDetail = () => {
                             <div className="flex flex-col sm:flex-row gap-1 bg-white/10 border border-white/20 rounded-xl p-1">
                                 <button
                                     onClick={() => setActiveTab('details')}
-                                    className={`flex-1 px-6 py-3 rounded-lg font-semibold transition-all duration-200 ${
-                                        activeTab === 'details'
+                                    className={`flex-1 px-6 py-3 rounded-lg font-semibold transition-all duration-200 ${activeTab === 'details'
                                             ? 'bg-gradient-to-r from-[#ff6a00] to-[#ee0979] text-white shadow-lg'
                                             : 'text-gray-300 hover:text-white hover:bg-white/10'
-                                    }`}
+                                        }`}
                                 >
                                     Details
                                 </button>
                                 <button
                                     onClick={() => setActiveTab('registrations')}
-                                    className={`flex-1 px-6 py-3 rounded-lg font-semibold transition-all duration-200 ${
-                                        activeTab === 'registrations'
+                                    className={`flex-1 px-6 py-3 rounded-lg font-semibold transition-all duration-200 ${activeTab === 'registrations'
                                             ? 'bg-gradient-to-r from-[#ff6a00] to-[#ee0979] text-white shadow-lg'
                                             : 'text-gray-300 hover:text-white hover:bg-white/10'
-                                    }`}
+                                        }`}
                                 >
                                     <div className="flex items-center justify-center gap-2">
                                         <Users className="w-4 h-4" />
@@ -354,11 +352,10 @@ const HackathonDetail = () => {
                                 </button>
                                 <button
                                     onClick={() => setActiveTab('shortlisted')}
-                                    className={`flex-1 px-6 py-3 rounded-lg font-semibold transition-all duration-200 ${
-                                        activeTab === 'shortlisted'
+                                    className={`flex-1 px-6 py-3 rounded-lg font-semibold transition-all duration-200 ${activeTab === 'shortlisted'
                                             ? 'bg-gradient-to-r from-[#ff6a00] to-[#ee0979] text-white shadow-lg'
                                             : 'text-gray-300 hover:text-white hover:bg-white/10'
-                                    }`}
+                                        }`}
                                 >
                                     <div className="flex items-center justify-center gap-2">
                                         <Trophy className="w-4 h-4" />
@@ -381,8 +378,8 @@ const HackathonDetail = () => {
                             <div className="mb-8">
                                 <div className="h-64 bg-gradient-to-br from-slate-700 to-slate-800 rounded-xl relative overflow-hidden">
                                     {(bannerPreview || hackathon.banner_url) ? (
-                                        <img 
-                                            src={bannerPreview || hackathon.banner_url} 
+                                        <img
+                                            src={bannerPreview || hackathon.banner_url}
                                             alt={hackathon.title}
                                             className="w-full h-full object-cover"
                                         />
@@ -391,7 +388,7 @@ const HackathonDetail = () => {
                                             <Calendar className="w-16 h-16 text-white/50" />
                                         </div>
                                     )}
-                                    
+
                                     {isEditing && (
                                         <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
                                             <label className="cursor-pointer">
@@ -486,14 +483,14 @@ const HackathonDetail = () => {
                                                 </div>
                                             ) : (
                                                 <p className="text-gray-300">
-                                                    {hackathon.team_min && hackathon.team_max 
+                                                    {hackathon.team_min && hackathon.team_max
                                                         ? `${hackathon.team_min}-${hackathon.team_max} members`
-                                                        : hackathon.team_min 
+                                                        : hackathon.team_min
                                                             ? `Min ${hackathon.team_min} members`
-                                                            : hackathon.team_max 
+                                                            : hackathon.team_max
                                                                 ? `Max ${hackathon.team_max} members`
                                                                 : 'Not specified'
-                                                }
+                                                    }
                                                 </p>
                                             )}
                                         </div>
@@ -605,8 +602,8 @@ const HackathonDetail = () => {
                                             <div className="relative">
                                                 <div className="w-24 h-24 rounded-full border-4 border-white/20 overflow-hidden bg-gradient-to-br from-slate-600 to-slate-700">
                                                     {(pfpPreview || hackathon.pfp_url) ? (
-                                                        <img 
-                                                            src={pfpPreview || hackathon.pfp_url} 
+                                                        <img
+                                                            src={pfpPreview || hackathon.pfp_url}
                                                             alt="Profile"
                                                             className="w-full h-full object-cover"
                                                         />
@@ -671,7 +668,7 @@ const HackathonDetail = () => {
                                         </div>
                                     </div>
                                 </div>
-                                
+
                                 <div className="bg-gradient-to-br from-green-500/20 to-green-600/20 border border-green-500/30 rounded-xl p-6">
                                     <div className="flex items-center gap-3">
                                         <div className="p-3 bg-green-500/20 rounded-lg">
@@ -688,7 +685,7 @@ const HackathonDetail = () => {
                                         </div>
                                     </div>
                                 </div>
-                                
+
                                 <div className="bg-gradient-to-br from-purple-500/20 to-purple-600/20 border border-purple-500/30 rounded-xl p-6">
                                     <div className="flex items-center gap-3">
                                         <div className="p-3 bg-purple-500/20 rounded-lg">
@@ -697,7 +694,7 @@ const HackathonDetail = () => {
                                         <div>
                                             <p className="text-purple-300 text-sm">Avg Team Size</p>
                                             <p className="text-2xl font-bold text-white">
-                                                {registrations.length > 0 
+                                                {registrations.length > 0
                                                     ? Math.round((registrations.reduce((total, reg) => {
                                                         const filteredTeammates = reg.teammates?.filter(t => t.id !== reg.team_leader?.id) || [];
                                                         return total + 1 + filteredTeammates.length;
@@ -708,7 +705,7 @@ const HackathonDetail = () => {
                                         </div>
                                     </div>
                                 </div>
-                                
+
                                 <div className="bg-gradient-to-br from-orange-500/20 to-orange-600/20 border border-orange-500/30 rounded-xl p-6">
                                     <div className="flex items-center gap-3">
                                         <div className="p-3 bg-orange-500/20 rounded-lg">
@@ -756,7 +753,7 @@ const HackathonDetail = () => {
                                             ) || [];
                                             const memberCount = 1 + filteredTeammates.length;
                                             return (
-                                                <div 
+                                                <div
                                                     key={registration.id}
                                                     className="bg-white/5 border border-white/10 rounded-xl p-6 hover:bg-white/10 transition-all duration-200"
                                                 >
@@ -924,7 +921,7 @@ const HackathonDetail = () => {
                                             ) || [];
                                             const memberCount = 1 + filteredTeammates.length;
                                             return (
-                                                <div 
+                                                <div
                                                     key={registration.id}
                                                     className="bg-white/5 border border-white/10 rounded-xl p-6 hover:bg-white/10 transition-all duration-200"
                                                 >
@@ -1019,7 +1016,7 @@ const HackathonDetail = () => {
                                         </div>
                                     </div>
                                 </div>
-                                
+
                                 <div className="bg-gradient-to-br from-green-500/20 to-green-600/20 border border-green-500/30 rounded-xl p-6">
                                     <div className="flex items-center gap-3">
                                         <div className="p-3 bg-green-500/20 rounded-lg">
@@ -1036,7 +1033,7 @@ const HackathonDetail = () => {
                                         </div>
                                     </div>
                                 </div>
-                                
+
                                 <div className="bg-gradient-to-br from-purple-500/20 to-purple-600/20 border border-purple-500/30 rounded-xl p-6">
                                     <div className="flex items-center gap-3">
                                         <div className="p-3 bg-purple-500/20 rounded-lg">
@@ -1045,7 +1042,7 @@ const HackathonDetail = () => {
                                         <div>
                                             <p className="text-purple-300 text-sm">Avg Team Size</p>
                                             <p className="text-2xl font-bold text-white">
-                                                {registrations.length > 0 
+                                                {registrations.length > 0
                                                     ? Math.round((registrations.reduce((total, reg) => {
                                                         const filteredTeammates = reg.teammates?.filter(t => t.id !== reg.team_leader?.id) || [];
                                                         return total + 1 + filteredTeammates.length;
@@ -1056,7 +1053,7 @@ const HackathonDetail = () => {
                                         </div>
                                     </div>
                                 </div>
-                                
+
                                 <div className="bg-gradient-to-br from-orange-500/20 to-orange-600/20 border border-orange-500/30 rounded-xl p-6">
                                     <div className="flex items-center gap-3">
                                         <div className="p-3 bg-orange-500/20 rounded-lg">
@@ -1104,7 +1101,7 @@ const HackathonDetail = () => {
                                             ) || [];
                                             const memberCount = 1 + filteredTeammates.length;
                                             return (
-                                                <div 
+                                                <div
                                                     key={registration.id}
                                                     className="bg-white/5 border border-white/10 rounded-xl p-6 hover:bg-white/10 transition-all duration-200"
                                                 >

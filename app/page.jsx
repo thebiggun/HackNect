@@ -37,36 +37,27 @@ export default function Home() {
 
   useEffect(() => {
     async function fetchHackathons() {
-      setLoading(true);
-      // Fetch all hackathons
-      const res = await fetch("/api/hackathons/public");
-      const data = await res.json();
-      if (!data.success) return setLoading(false);
-      const all = data.data || [];
-      // For each hackathon, fetch registrations and count participants
-      const hackathonsWithCounts = await Promise.all(
-        all.map(async (hack) => {
-          try {
-            const regRes = await fetch(`/api/hackathons/${hack.id}/registrations`);
-            const regData = await regRes.json();
-            if (!regData.success) return { ...hack, participantCount: 0 };
-            // Count participants: each registration has a team_leader and teammates[]
-            let count = 0;
-            regData.data.forEach((reg) => {
-              // teammates may include leader, so filter
-              const teammates = reg.teammates?.filter(t => t.id !== reg.team_leader?.id) || [];
-              count += 1 + teammates.length;
-            });
-            return { ...hack, participantCount: count };
-          } catch {
-            return { ...hack, participantCount: 0 };
-          }
-        })
-      );
-      // Sort by participantCount desc, take top 3
-      hackathonsWithCounts.sort((a, b) => b.participantCount - a.participantCount);
-      setHackathons(hackathonsWithCounts.slice(0, 3));
-      setLoading(false);
+      try {
+        setLoading(true);
+        // Fetch all hackathons with participant counts
+        const res = await fetch("/api/hackathons/public");
+        const data = await res.json();
+        if (!data.success) {
+          setLoading(false);
+          return;
+        }
+        const all = (data.data || []).map((hack) => ({
+          ...hack,
+          teamsCount: hack.teamsCount ?? hack.teams_count ?? 0,
+        }));
+        // Sort by teamsCount desc, take top 3
+        all.sort((a, b) => (b.teamsCount || 0) - (a.teamsCount || 0));
+        setHackathons(all.slice(0, 3));
+      } catch (err) {
+        console.error("Failed to load trending hackathons:", err);
+      } finally {
+        setLoading(false);
+      }
     }
     fetchHackathons();
   }, []);
@@ -111,8 +102,8 @@ export default function Home() {
                   <p className="text-gray-300 text-sm line-clamp-3 mb-2">{hack.description || "No description available."}</p>
                   <div className="flex items-center gap-2 mt-auto">
                     <Users className="w-5 h-5 text-cyan-400" />
-                    <span className="font-semibold text-cyan-200 text-lg">{hack.participantCount}</span>
-                    <span className="text-gray-400 text-sm ml-1">participants</span>
+                    <span className="font-semibold text-cyan-200 text-lg">{hack.teamsCount}</span>
+                    <span className="text-gray-400 text-sm ml-1">{hack.teamsCount === 1 ? 'team' : 'teams'}</span>
                   </div>
                   <div className="flex items-center gap-2 text-gray-400 text-xs mt-1">
                     <MapPin className="w-4 h-4" />
