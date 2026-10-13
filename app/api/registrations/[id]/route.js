@@ -23,14 +23,16 @@ export async function GET(req, { params }) {
             return new Response(JSON.stringify({ success: false, error: 'User not found in database' }), { status: 404 });
         }
 
-        // Fetch the registration with hackathon details
+        // Fetch the registration with hackathon details (including team size limits)
         const { data: registration, error: registrationError } = await supabase
             .from('registrations')
             .select(`
                 *,
                 hackathons (
                     id,
-                    title
+                    title,
+                    team_min,
+                    team_max
                 )
             `)
             .eq('id', id)
@@ -49,13 +51,14 @@ export async function GET(req, { params }) {
             return new Response(JSON.stringify({ success: false, error: 'Access denied' }), { status: 403 });
         }
 
-        // Fetch teammate details
+        // Fetch all member details (team leader + teammates)
+        const memberIds = Array.from(new Set([registration.team_leader_id, ...(registration.teammates || [])].filter(Boolean)));
         let teammates = [];
-        if (registration.teammates && registration.teammates.length > 0) {
+        if (memberIds.length > 0) {
             const { data: teammatesData, error: teammatesError } = await supabase
                 .from('users')
                 .select('id, name, email')
-                .in('id', registration.teammates);
+                .in('id', memberIds);
 
             if (!teammatesError && teammatesData) {
                 teammates = teammatesData;
@@ -66,7 +69,9 @@ export async function GET(req, { params }) {
             success: true, 
             data: { 
                 registration,
-                teammates 
+                teammates,
+                isTeamLeader,
+                currentUserId: userData.id
             } 
         }), { status: 200 });
 
@@ -92,10 +97,18 @@ export async function PUT(req, { params }) {
         if (userError || !userData) {
             return new Response(JSON.stringify({ success: false, error: 'User not found in database' }), { status: 404 });
         }
-        // Fetch the registration
+        // Fetch the registration with hackathon details
         const { data: registration, error: registrationError } = await supabase
             .from('registrations')
-            .select('*')
+            .select(`
+                *,
+                hackathons (
+                    id,
+                    title,
+                    team_min,
+                    team_max
+                )
+            `)
             .eq('id', id)
             .single();
         if (registrationError || !registration) {
@@ -103,8 +116,21 @@ export async function PUT(req, { params }) {
         }
         // Only team lead can upload
         if (registration.team_leader_id !== userData.id) {
-            return new Response(JSON.stringify({ success: false, error: 'Only the team lead can upload the PDF' }), { status: 403 });
+            return new Response(JSON.stringify({ success: false, error: 'Only the team leader can upload the PDF' }), { status: 403 });
         }
+
+        // Validate minimum team size requirement
+        const memberIds = new Set([registration.team_leader_id, ...(registration.teammates || [])].filter(Boolean));
+        const currentMemberCount = memberIds.size;
+        const minTeamSize = registration.hackathons?.team_min || 1;
+
+        if (currentMemberCount < minTeamSize) {
+            return new Response(JSON.stringify({ 
+                success: false, 
+                error: `Your team must have at least ${minTeamSize} member${minTeamSize > 1 ? 's' : ''} to submit an idea PDF (current: ${currentMemberCount}).` 
+            }), { status: 400 });
+        }
+
         const formData = await req.formData();
         const pdfFile = formData.get('pdf');
         if (!pdfFile || !(pdfFile instanceof File)) {

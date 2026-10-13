@@ -99,16 +99,20 @@ CREATE TABLE IF NOT EXISTS public.registrations (
     teammates UUID[] NOT NULL DEFAULT '{}'::UUID[],
     invite_code VARCHAR(10) UNIQUE,
     idea_pdf_url TEXT,
+    score INTEGER DEFAULT NULL,
     submitted_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
     created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
 
-    -- Explicit constraint names for PostgREST joins: users!registrations_team_leader_id_fkey
+    -- Constraint names explicitly set for Supabase PostgREST joins: users!registrations_team_leader_id_fkey
     CONSTRAINT registrations_hackathon_id_fkey FOREIGN KEY (hackathon_id) 
         REFERENCES public.hackathons(id) ON DELETE CASCADE,
     CONSTRAINT registrations_team_leader_id_fkey FOREIGN KEY (team_leader_id) 
         REFERENCES public.users(id) ON DELETE CASCADE
 );
+
+-- Migration safety: ensure score column exists if table was already created earlier
+ALTER TABLE public.registrations ADD COLUMN IF NOT EXISTS score INTEGER;
 
 -- Indexes for registrations
 CREATE INDEX IF NOT EXISTS idx_registrations_hackathon_id ON public.registrations (hackathon_id);
@@ -116,6 +120,7 @@ CREATE INDEX IF NOT EXISTS idx_registrations_team_leader_id ON public.registrati
 CREATE INDEX IF NOT EXISTS idx_registrations_invite_code ON public.registrations (invite_code);
 CREATE INDEX IF NOT EXISTS idx_registrations_idea_pdf_url ON public.registrations (idea_pdf_url);
 CREATE INDEX IF NOT EXISTS idx_registrations_submitted_at ON public.registrations (submitted_at DESC);
+CREATE INDEX IF NOT EXISTS idx_registrations_score ON public.registrations (score DESC);
 
 -- GIN index for fast array containment queries: teammates.cs.{userId}
 CREATE INDEX IF NOT EXISTS idx_registrations_teammates_gin ON public.registrations USING GIN (teammates);

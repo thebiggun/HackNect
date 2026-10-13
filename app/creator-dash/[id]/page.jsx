@@ -35,7 +35,7 @@ const HackathonDetail = () => {
     }, [params.id]);
 
     useEffect(() => {
-        if (activeTab === 'registrations' && isCreator) {
+        if ((activeTab === 'registrations' || activeTab === 'shortlisted') && isCreator) {
             fetchRegistrations();
         }
     }, [activeTab, isCreator]);
@@ -73,13 +73,16 @@ const HackathonDetail = () => {
             const data = await response.json();
 
             if (data.success) {
-                setRegistrations(data.data);
+                setRegistrations(data.data || []);
+                return data.data || [];
             } else {
                 setError(data.error || 'Failed to fetch registrations');
+                return [];
             }
         } catch (err) {
             setError('Failed to fetch registrations');
             console.error('Error fetching registrations:', err);
+            return [];
         } finally {
             setRegistrationsLoading(false);
         }
@@ -769,6 +772,13 @@ const HackathonDetail = () => {
                                                                         {memberCount} members
                                                                     </span>
                                                                 </div>
+                                                                {typeof registration.score === 'number' && (
+                                                                    <div className="px-3 py-1 bg-purple-500/20 border border-purple-500/30 rounded-full whitespace-nowrap">
+                                                                        <span className="text-purple-300 text-sm font-medium">
+                                                                            Score: {registration.score}/100
+                                                                        </span>
+                                                                    </div>
+                                                                )}
                                                             </div>
                                                             <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-gray-300 w-full sm:w-auto">
                                                                 <span className="flex items-center gap-1">
@@ -844,25 +854,31 @@ const HackathonDetail = () => {
                                             setShortlisting(true);
                                             setShortlistError(null);
                                             try {
-                                                // Collect all valid PDF URLs from registrations
-                                                const urls = registrations
-                                                    .map(r => r.idea_pdf_url)
-                                                    .filter(url => url && url.trim() !== '');
-                                                if (!urls.length) {
-                                                    setShortlistError('No valid PDF URLs found.');
-                                                    setShortlisting(false);
-                                                    return;
+                                                let currentRegs = registrations;
+                                                if (!currentRegs || currentRegs.length === 0) {
+                                                    currentRegs = await fetchRegistrations();
                                                 }
+                                                // Collect all valid PDF URLs from registrations
+                                                const urls = (currentRegs || [])
+                                                    .map(r => r.idea_pdf_url)
+                                                    .filter(url => url && typeof url === 'string' && url.trim() !== '');
+
                                                 const response = await fetch('/api/shortlist-ideas', {
                                                     method: 'POST',
                                                     headers: { 'Content-Type': 'application/json' },
-                                                    body: JSON.stringify({ pdfUrls: urls, n: Number(hackathon.top_n_selections) })
+                                                    body: JSON.stringify({ 
+                                                        pdfUrls: urls, 
+                                                        n: Number(hackathon.top_n_selections) || 1,
+                                                        hackathonId: params.id 
+                                                    })
                                                 });
                                                 const data = await response.json();
-                                                // Refetch shortlisted teams after shortlisting
-                                                fetchShortlistedTeams();
-                                                if (!data.shortlisted) {
-                                                    setShortlistError('No shortlist returned.');
+                                                if (!response.ok || !data.shortlisted) {
+                                                    setShortlistError(data.error || 'Failed to shortlist ideas.');
+                                                } else {
+                                                    // Refetch shortlisted teams and registrations after shortlisting
+                                                    fetchShortlistedTeams();
+                                                    fetchRegistrations();
                                                 }
                                             } catch (err) {
                                                 setShortlistError('Failed to shortlist ideas.');
@@ -937,6 +953,13 @@ const HackathonDetail = () => {
                                                                         {memberCount} members
                                                                     </span>
                                                                 </div>
+                                                                {typeof registration.score === 'number' && (
+                                                                    <div className="px-3 py-1 bg-purple-500/20 border border-purple-500/30 rounded-full">
+                                                                        <span className="text-purple-300 text-sm font-medium">
+                                                                            Score: {registration.score}/100
+                                                                        </span>
+                                                                    </div>
+                                                                )}
                                                             </div>
                                                             <div className="flex items-center gap-4 text-sm text-gray-300">
                                                                 <span className="flex items-center gap-1">
