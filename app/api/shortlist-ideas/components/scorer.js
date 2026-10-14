@@ -17,6 +17,7 @@ export async function scoreSingleIdea(ai, text, identifier = '') {
             config: {
                 systemInstruction: SCORING_INSTRUCTION,
                 temperature: 0,
+                seed: 42,
                 maxOutputTokens: 64,
             },
         });
