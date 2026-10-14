@@ -23,11 +23,11 @@ const TeamDetailPage = () => {
     const fetchTeamDetails = async () => {
         try {
             setLoading(true);
-            
+
             // Fetch team members and team info
             const response = await fetch(`/api/teams/${params.id}/members`);
             const data = await response.json();
-            
+
             if (data.success) {
                 setTeam(data.data.team);
                 setMembers(data.data.members);
@@ -169,7 +169,7 @@ const TeamDetailPage = () => {
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div className="flex items-center gap-4 text-sm text-gray-400">
                                 <div className="flex items-center gap-1">
                                     <Users className="w-4 h-4" />
@@ -189,7 +189,7 @@ const TeamDetailPage = () => {
                             <Users className="w-5 h-5" />
                             Team Members
                         </h2>
-                        
+
                         {members.length === 0 ? (
                             <div className="text-center py-8">
                                 <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
@@ -208,7 +208,7 @@ const TeamDetailPage = () => {
                                                 </div>
                                             </div>
                                         </div>
-                                        
+
                                         <div className="flex items-center gap-4">
                                             <div className="text-right">
                                                 <p className="text-sm font-medium text-white">{getRoleLabel(member.role)}</p>

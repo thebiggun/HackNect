@@ -79,7 +79,7 @@ export async function POST(req) {
         // Handle banner upload
         let banner_url = null;
         const bannerFile = formData.get('banner_url');
-        if (bannerFile && bannerFile instanceof File) {
+        if (bannerFile && bannerFile instanceof File && bannerFile.size > 0) {
             const bannerExt = bannerFile.name.split('.').pop();
             const bannerPath = `banners/${uuidv4()}.${bannerExt}`;
             const { data, error } = await supabase.storage
@@ -94,7 +94,7 @@ export async function POST(req) {
         // Handle pfp upload
         let pfp_url = null;
         const pfpFile = formData.get('pfp_url');
-        if (pfpFile && pfpFile instanceof File) {
+        if (pfpFile && pfpFile instanceof File && pfpFile.size > 0) {
             const pfpExt = pfpFile.name.split('.').pop();
             const pfpPath = `pfps/${uuidv4()}.${pfpExt}`;
             const { data, error } = await supabase.storage

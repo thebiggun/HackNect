@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Loader from '@/components/Loader';
+import { compressImage } from "@/lib/imageUtils";
 
 const HackathonForm = () => {
     const router = useRouter();
@@ -24,6 +25,7 @@ const HackathonForm = () => {
         pfpPreview: "./user.png",
     });
     const [submitting, setSubmitting] = useState(false);
+    const [submitStage, setSubmitStage] = useState("");
 
     // Major Indian cities
     const indianCities = [
@@ -59,7 +61,6 @@ const HackathonForm = () => {
         "Warangal", "Yamunanagar"
     ];
 
-
     const handleChange = (e) => {
         const { name, value, type, files } = e.target;
         if (type === "file") {
@@ -88,31 +89,94 @@ const HackathonForm = () => {
             venueString = `${form.detailed_venue}, ${form.city}, India`;
         }
 
-        for (const key in form) {
-            if (key === "bannerPreview" || key === "pfpPreview" || key === "city" || key === "detailed_venue" || key === "venue_type") continue; // skip previews and individual venue fields
-            if (form[key]) formData.append(key, form[key]);
-        }
-
-        // Add the constructed venue string
-        formData.append("venue", venueString);
-
         try {
             setSubmitting(true);
+            setSubmitStage("Optimizing images...");
+
+            // Compress banner if selected
+            let bannerFile = form.banner_url;
+            if (bannerFile && bannerFile instanceof File) {
+                bannerFile = await compressImage(bannerFile, {
+                    maxWidth: 1920,
+                    maxHeight: 1080,
+                    quality: 0.8,
+                });
+            }
+
+            // Compress profile picture if selected
+            let pfpFile = form.pfp_url;
+            if (pfpFile && pfpFile instanceof File) {
+                pfpFile = await compressImage(pfpFile, {
+                    maxWidth: 512,
+                    maxHeight: 512,
+                    quality: 0.85,
+                });
+            }
+
+            // Append textual form fields
+            for (const key in form) {
+                if (
+                    key === "bannerPreview" ||
+                    key === "pfpPreview" ||
+                    key === "city" ||
+                    key === "detailed_venue" ||
+                    key === "venue_type" ||
+                    key === "banner_url" ||
+                    key === "pfp_url"
+                ) continue;
+                if (form[key]) formData.append(key, form[key]);
+            }
+
+            if (bannerFile && bannerFile instanceof File) {
+                formData.append("banner_url", bannerFile);
+            }
+            if (pfpFile && pfpFile instanceof File) {
+                formData.append("pfp_url", pfpFile);
+            }
+
+            // Add the constructed venue string
+            formData.append("venue", venueString);
+
+            // Safety check: ensure combined payload does not exceed 4MB
+            const totalUploadBytes = (bannerFile?.size || 0) + (pfpFile?.size || 0);
+            if (totalUploadBytes > 4 * 1024 * 1024) {
+                throw new Error("Total image size exceeds 4MB. Please choose smaller or lower-resolution images.");
+            }
+
+            setSubmitStage("Creating hackathon...");
             const res = await fetch("/api/hackathons", {
                 method: "POST",
                 body: formData,
             });
+
+            if (!res.ok) {
+                let errorMsg = `Server error (${res.status})`;
+                try {
+                    const errorData = await res.json();
+                    errorMsg = errorData.error || errorMsg;
+                } catch {
+                    const text = await res.text();
+                    if (res.status === 413 || text.includes("FUNCTION_PAYLOAD_TOO_LARGE") || text.includes("Request Entity Too Large")) {
+                        errorMsg = "Images are too large for server limits. Please select smaller images.";
+                    } else if (text) {
+                        errorMsg = text.slice(0, 150);
+                    }
+                }
+                alert("Error: " + errorMsg);
+                return;
+            }
+
             const data = await res.json();
             if (data.success) {
                 router.push("/creator-dash");
-                // Optionally reset form or redirect
             } else {
-                alert("Error: " + data.error);
+                alert("Error: " + (data.error || "Failed to create hackathon"));
             }
         } catch (err) {
             alert("Submission failed: " + err.message);
         } finally {
             setSubmitting(false);
+            setSubmitStage("");
         }
     };
 
@@ -241,8 +305,13 @@ const HackathonForm = () => {
                     </div>
                 </div>
                 <div className="pt-4">
-                    <button type="submit" className="w-full py-3 rounded-lg font-bold text-lg bg-gradient-to-r from-[#ff6a00] to-[#ee0979] text-white shadow-lg hover:from-[#ee0979] hover:to-[#ff6a00] transition-all duration-200 cursor-pointer" disabled={submitting}>
-                        {submitting ? <Loader size={20} className="mr-2 align-middle" /> : 'Create Hackathon'}
+                    <button type="submit" className="w-full py-3 rounded-lg font-bold text-lg bg-gradient-to-r from-[#ff6a00] to-[#ee0979] text-white shadow-lg hover:from-[#ee0979] hover:to-[#ff6a00] transition-all duration-200 cursor-pointer disabled:opacity-75 disabled:cursor-not-allowed flex items-center justify-center" disabled={submitting}>
+                        {submitting ? (
+                            <>
+                                <Loader size={20} className="mr-2 inline" />
+                                {submitStage || 'Creating Hackathon...'}
+                            </>
+                        ) : 'Create Hackathon'}
                     </button>
                 </div>
             </form>

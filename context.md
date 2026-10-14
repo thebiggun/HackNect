@@ -1,245 +1,510 @@
-# HackNect — Comprehensive Project Context & Technical Architecture
+# HackNect — Comprehensive Codebase & Architecture Context
+
+> **Target Audience**: AI coding agents, developers, and maintainers.  
+> **Document Purpose**: Single source of truth detailing the architecture, database schema, APIs, security, workflows, algorithms, and deployment instructions for HackNect.
 
 ---
 
-## 1. Executive Summary & Problem Statement
-
-### 1.1 Overview
-**HackNect** is a comprehensive, next-generation hackathon management and team collaboration platform designed for modern tech communities, educational institutions, student innovators, and hackathon organizers. It bridges the gap between organizers hosting large-scale events and participants looking to discover hackathons, assemble teams, and submit project proposals.
-
-### 1.2 Problem Statement
-Traditional hackathon management platforms suffer from significant operational bottlenecks:
-1. **Manual Idea Screening Overhead**: In large hackathons with hundreds or thousands of registrants, organizers spend countless manual hours reading multi-page project proposal PDFs during round-1 evaluations, leading to delays and subjective fatigue.
-2. **Friction in Team Formation**: Coordinating team invites, enforcing minimum and maximum team member constraints, and managing registration codes often requires clunky external spreadsheets or fragmented communication channels.
-3. **Fragmented Creator & Participant Experience**: Lack of unified, real-time dashboards to track team status, submission readiness, countdown deadlines, and shortlisting results in confusion and dropped registrations.
-
-### 1.3 The HackNect Solution
-HackNect provides an integrated, full-stack solution featuring:
-- **AI-Powered Round-1 Shortlisting**: Leverages natural language processing and Large Language Models (LLMs) to automatically parse PDF submissions, extract core project ideas, evaluate them against standardized judging criteria (innovation, feasibility, impact, technical execution), and select the top-$N$ teams in seconds.
-- **Frictionless Team Assembling**: Instant 8-character unique invite code generation allowing team leads to create teams and invite peers with automatic member limit enforcement (min/max size validation).
-- **Dual-Sided Unified Portals**: Distinct yet harmonious interfaces for participants (registration tracking, wins counter, idea PDF upload workspace) and creators (event metrics, applicant roster, live editing, AI shortlisting triggers).
+## Table of Contents
+1. [Project Overview](#1-project-overview)
+2. [Tech Stack & Dependencies](#2-tech-stack--dependencies)
+3. [Architecture & Project Structure](#3-architecture--project-structure)
+4. [Database Schema & Data Models](#4-database-schema--data-models)
+5. [End-to-End Workflows & User Journeys](#5-end-to-end-workflows--user-journeys)
+6. [Complete API Reference](#6-complete-api-reference)
+7. [Authentication, Authorization & Security](#7-authentication-authorization--security)
+8. [Core Business Logic & Algorithms](#8-core-business-logic--algorithms)
+9. [Setup, Configuration & Deployment](#9-setup-configuration--deployment)
+10. [Architectural Nuances, Discrepancies & Recommendations](#10-architectural-nuances-discrepancies--recommendations)
 
 ---
 
-## 2. Core Features & Use Cases
+## 1. Project Overview
 
-### 2.1 Participant Experience
-- **Hackathon Discovery (`/explore`)**: Filter hackathons by event type (Virtual vs. Offline), Indian cities, and timeline urgency (This Week, This Month, This Year).
-- **Hackathon Deep-Dive (`/explore/[id]`)**: Comprehensive event overview including countdown timers, registration status badges, team size guidelines, prizes, timeline, and venue info.
-- **Team Creation & Joining (`/explore/[id]/register`)**:
-  - *Create Team*: Auto-generates an alphanumeric invite code, assigns leader permissions, and links the registration to the target hackathon.
-  - *Join Team*: Fast entry via an invite code with automated validation against duplicate registrations and team size caps.
-- **Participant Dashboard (`/dash`)**:
-  - Centralized metrics: *Created Hackathons*, *Participating Events*, *Completed Events*, and *AI Shortlisted Wins*.
-  - Color-coded registration cards indicating idea submission status and deadline expiration.
-- **Team Workspace (`/registration/[id]`)**:
-  - View leader and teammate rosters.
-  - One-click invite code copying.
-  - Team-size gatekeeping for proposal submission: strictly requires meeting minimum team size before the team leader can upload the project proposal PDF.
-  - Direct PDF preview link once uploaded to Supabase Storage.
+### 1.1 Purpose & Mission
+**HackNect** is a full-stack web application designed to streamline hackathon discovery, team formation, hackathon administration, and submission evaluation. It is specifically tailored for hackathons in India and global developer communities, bridging the gap between hackathon organizers and student/developer participants.
 
-### 2.2 Organizer / Creator Experience
-- **Hackathon Creation (`/hosting`)**: Form to publish new hackathons with custom banner/avatar uploads, offline city selection (from comprehensive list of Indian cities) or virtual mode, minimum/maximum team sizes, top-$N$ winners quota, prizes, timeline, and registration deadlines.
-- **Creator Dashboard (`/creator-dash`)**: List of all hosted hackathons with live registration badges (*Open with days left* vs. *Expired*), quick-access view/edit actions, and total event counters.
-- **Event Control Center (`/creator-dash/[id]`)**:
-  - **Details Tab**: Live in-place editing of title, description, team size bounds, deadlines, venue, prizes, timeline, and banner/avatar assets.
-  - **Registrations Tab**: Analytics cards (Total Teams, Total Participants, Average Team Size, Latest Registration) and complete registrant roster with team member cards and direct PDF inspection links.
-  - **Shortlisted Tab**: Trigger the **AI First-Round Shortlisting Engine** for the top-$N$ selections, view automated ranking results, and inspect shortlisted teams.
+### 1.2 Problems Solved
+1. **Organizer Overhead & Bottlenecks**: Organizing hackathons traditionally involves managing team spreadsheets, tracking PDF idea submissions, and manually grading hundreds of proposals in round 1.
+2. **Team Formation Friction**: Solo participants struggle to team up with friends or find teammates with a transparent invite mechanism and enforced team capacity limits.
+3. **Subjective & Slow First-Round Judging**: Evaluating initial pitch decks or project idea documents is often subjective, biased, and slow. HackNect automates initial shortlisting using Google Gemini AI, applying a strict 100-point standardized rubric across Innovation, Social Impact, Feasibility, and Technical Execution.
+4. **Participant Tracking**: Participants lack a unified portal to track their registrations, ongoing competitions, submission status, and shortlisted wins.
+
+### 1.3 Key Features
+- **Public Hackathon Discovery ([`ExplorePage`](file:///c:/Users/yatis/Desktop/HackNect/HackNect/app/explore/page.jsx))**:
+  - Filter hackathons by Event Type (`Virtual` vs `Offline`).
+  - Filter by 150+ major Indian cities (e.g., Bangalore, Mumbai, Delhi, Hyderabad, Pune).
+  - Filter by Registration Deadline (`This Week`, `This Month`, `This Year`).
+  - Auto-hides expired hackathons from active discovery.
+- **Hackathon Hosting & Administration ([`HackathonForm`](file:///c:/Users/yatis/Desktop/HackNect/HackNect/app/hosting/page.jsx))**:
+  - Organizers define titles, descriptions, timelines, prize pools, registration deadlines, and team size limits (`team_min`, `team_max`).
+  - Support for virtual event tagging or structured offline venues (`detailed_venue`, `city`, `India`).
+  - Media uploads: Banner images and profile avatars uploaded directly to Supabase Storage.
+  - Creator dashboard ([`CreatorDash`](file:///c:/Users/yatis/Desktop/HackNect/HackNect/app/creator-dash/page.jsx)) with live analytics, participant counts, and in-place event editing.
+- **Team Management & Invite Code System ([`HackathonTeamRegistration`](file:///c:/Users/yatis/Desktop/HackNect/HackNect/app/explore/[id]/register/page.jsx))**:
+  - Team leaders create a team and automatically receive a unique 8-character alphanumeric invite code (e.g., `AB12CD34`).
+  - Teammates enter the invite code to instantly join the team.
+  - Automatic validation prevents double-registration for the same hackathon and enforces `team_max`.
+- **Idea PDF Submission Gate ([`RegistrationDetailPage`](file:///c:/Users/yatis/Desktop/HackNect/HackNect/app/registration/[id]/page.jsx))**:
+  - Locks submission until the team meets the required `team_min` threshold.
+  - Restricts uploading to the designated team leader.
+  - Uploads idea documents (pitch decks, architecture diagrams) to Supabase Storage and records the public URL.
+- **AI-Powered First Round Shortlisting ([`POST /api/shortlist-ideas`](file:///c:/Users/yatis/Desktop/HackNect/HackNect/app/api/shortlist-ideas/route.js))**:
+  - One-click trigger for organizers from the creator dashboard.
+  - Automatically fetches all submitted idea PDFs for the hackathon.
+  - Extracts text via [`extractPdfTexts`](file:///c:/Users/yatis/Desktop/HackNect/HackNect/app/api/shortlist-ideas/components/pdfParser.js).
+  - Evaluates each proposal with Google Gemini (`gemini-3.5-flash-lite`) using a standardized rubric.
+  - Persists individual scores (0–100) to the registrations table and writes top-$N$ winners into the `shortlists` table.
+- **Participant Dashboard ([`page`](file:///c:/Users/yatis/Desktop/HackNect/HackNect/app/dash/page.jsx))**:
+  - Real-time statistics: Total Created, Ongoing Participating, Completed, and Shortlisted Wins.
+  - Color-coded submission badges: Idea PDF Uploaded vs Missing, Ongoing vs Expired.
 
 ---
 
-## 3. Technology Stack & Architecture
+## 2. Tech Stack & Dependencies
+
+All dependencies are sourced directly from [package.json](file:///c:/Users/yatis/Desktop/HackNect/HackNect/package.json):
+
+| Category | Technology / Library | Version | Role in HackNect |
+| :--- | :--- | :--- | :--- |
+| **Framework** | Next.js | `^16.4.0` | React full-stack framework utilizing App Router (`app/` directory), Turbopack dev server, and route handlers. |
+| **UI Library** | React & React DOM | `^19.0.0` | Core declarative component rendering engine. |
+| **Authentication** | `@clerk/nextjs` | `^7.9.15` | User authentication, session management, route protection, `<ClerkProvider />`, `<SignInButton />`, `<UserButton />`. |
+| **Webhook Verification** | `svix` | `^1.69.0` | Cryptographic signature verification for incoming Clerk user webhooks (`user.created`, `user.updated`, `user.deleted`). |
+| **Database & Storage** | `@supabase/supabase-js` | `^2.50.5` | PostgreSQL client & object storage SDK used in server-side API routes via service role key. |
+| **LLM & AI Evaluation** | `@google/genai` | `^2.29.0` | Official Google GenAI SDK used to evaluate submitted proposal PDFs using Gemini (`gemini-3.5-flash-lite`). |
+| **PDF Extraction** | `pdf-parse` | `^1.1.1` | Server-side buffer-based text extraction from downloaded submission PDFs. |
+| **Styling** | Tailwind CSS & `@tailwindcss/postcss` | `^4.0.0` | Utility-first CSS styling using Tailwind v4 `@import "tailwindcss";`. |
+| **Icons** | `lucide-react` | `^0.525.0` | UI icon set (Users, Trophy, Plus, MapPin, Calendar, Clock, Crown, etc.). |
+| **Identifiers** | `uuid` | `^11.1.0` | Unique UUIDv4 generation for storage file paths (`banners/`, `pfps/`). |
+| **HTTP Fetch** | `node-fetch` | `^3.3.2` | Server-side HTTP request utility for remote asset fetching. |
+| **Utilities** | `formidable`, `micro`, `@huggingface/inference` | Various | Form parsing and helper dependencies declared in `package.json`. |
+
+---
+
+## 3. Architecture & Project Structure
+
+HackNect follows the Next.js App Router architecture. The root layout provides global auth context via Clerk and renders an ambient animated background alongside the responsive navigation bar.
+
+### 3.1 Directory Tree
 
 ```
-                                  +-----------------------+
-                                  |    Clerk Auth SaaS    |
-                                  +-----------+-----------+
-                                              | Webhooks (Svix)
-                                              v
-+------------------------+        +-----------------------+        +------------------------+
-|      Client / UI       |<------>|  Next.js 15 App Router|<------>|     Supabase PG DB     |
-|  (React 19, Tailwind)  |        |    (Server Actions &  |        |  (PostgreSQL + Storage)|
-+------------------------+        |     Route Handlers)   |        +------------------------+
-                                  +-----------+-----------+
-                                              |
-                                              | PDF Buffer Stream & Prompt
-                                              v
-                                  +-----------------------+
-                                  | Hugging Face Inference|
-                                  | (Mistral-7B-Instruct) |
-                                  +-----------------------+
+HackNect/
+├── .env                              # Environment variables (Clerk, Supabase, Gemini)
+├── .gitignore                        # Git ignore patterns
+├── README.md                         # Standard Next.js setup readme
+├── TEAM_SETUP.md                     # Documentation placeholder
+├── eslint.config.mjs                 # ESLint flat config
+├── jsconfig.json                     # Path aliases: "@/*" -> "./*"
+├── middleware.js                     # Clerk route protection middleware
+├── next.config.mjs                   # Next.js build configuration
+├── package.json                      # Project dependencies and npm scripts
+├── postcss.config.mjs                # PostCSS plugins config (Tailwind v4)
+├── supabase_schema.sql               # Complete SQL schema, RLS, indexes, triggers & storage setup
+│
+├── app/                              # Next.js App Router root
+│   ├── favicon.ico                   # App icon
+│   ├── globals.css                   # Global CSS, Tailwind v4 import & custom styles
+│   ├── layout.js                     # Root layout with ClerkProvider, Background & Navbar
+│   ├── page.jsx                      # Landing page featuring top hackathons & value props
+│   │
+│   ├── api/                          # Server-side API Route Handlers
+│   │   ├── clerk/webhook/route.js    # Clerk webhook receiver (syncs users to Supabase)
+│   │   ├── hackathons/
+│   │   │   ├── route.js              # GET user created hackathons, POST create hackathon
+│   │   │   ├── [id]/
+│   │   │   │   ├── route.js          # GET hackathon details (authenticated), PUT update
+│   │   │   │   ├── registrations/
+│   │   │   │   │   └── route.js      # GET registrations & teammate details for a hackathon
+│   │   │   │   └── shortlisted/
+│   │   │   │       └── route.js      # GET shortlisted teams for creator dashboard
+│   │   │   └── public/
+│   │   │       ├── route.js          # GET all public hackathons + team counts
+│   │   │       └── [id]/route.js     # GET single public hackathon + creator profile + team count
+│   │   ├── registrations/[id]/
+│   │   │   └── route.js              # GET registration details, PUT upload idea PDF
+│   │   ├── shortlist-ideas/
+│   │   │   ├── route.js              # POST trigger AI shortlisting pipeline
+│   │   │   └── components/           # Shortlisting sub-modules
+│   │   │       ├── constants.js      # Scoring prompt, rubric, Gemini model name
+│   │   │       ├── database.js       # Supabase queries & batch updates for shortlists
+│   │   │       ├── index.js          # Re-exports for shortlisting components
+│   │   │       ├── pdfParser.js      # PDF downloading and text parsing via pdf-parse
+│   │   │       └── scorer.js         # Gemini client initialization, scoring & ranking
+│   │   ├── shortlists/user-wins/
+│   │   │   └── route.js              # POST count shortlisted wins for given registration IDs
+│   │   ├── teams/
+│   │   │   ├── route.js              # GET user registrations, POST create/join team
+│   │   │   └── [id]/members/
+│   │   │       └── route.js          # GET members from extended teams table
+│   │   └── webhook/register/
+│   │       └── route.js              # Re-export alias pointing to api/clerk/webhook
+│   │
+│   ├── creator-dash/                 # Organizer Dashboard
+│   │   ├── page.jsx                  # Listing of hackathons created by the logged-in user
+│   │   └── [id]/
+│   │       ├── page.jsx              # Tabbed detail view (Details, Registrations, Shortlisted)
+│   │       └── components/           # Organizer detail tabs & widgets
+│   │           ├── BannerSection.jsx # Banner display & edit widget
+│   │           ├── DetailsTab.jsx    # General hackathon settings edit form
+│   │           ├── HackathonHeader.jsx# Navigation header with edit/save/cancel controls
+│   │           ├── RegistrationsTab.jsx# Team registrations table
+│   │           ├── ShortlistedTab.jsx# AI shortlisting action button & winners list
+│   │           ├── SidebarMeta.jsx   # Profile picture, timeline, creation timestamp
+│   │           ├── StatsCards.jsx    # Metrics: teams, participants, avg team size
+│   │           ├── TabNavigation.jsx # Switch between Details, Registrations, Shortlisted
+│   │           ├── TeamCard.jsx      # Card representing a team, leader, teammates, PDF link, score
+│   │           ├── index.js          # Re-exports for creator-dash components
+│   │           └── utils.js          # Status calculation & date formatting helpers
+│   │
+│   ├── dash/                         # Participant Dashboard
+│   │   └── page.jsx                  # Participant registrations, status badges & metric cards
+│   │
+│   ├── explore/                      # Hackathon Explorer
+│   │   ├── page.jsx                  # Filterable hackathon discovery grid
+│   │   ├── [id]/
+│   │   │   ├── page.jsx              # Public hackathon detail view
+│   │   │   └── register/
+│   │   │       └── page.jsx          # Team registration (Create Team or Join with Invite Code)
+│   │   └── components/               # Modular components for explorer & registration
+│   │       ├── constants.js          # List of 150+ Indian cities for filtering
+│   │       ├── index.js              # Re-exports
+│   │       ├── utils.js              # Countdown timer, status, date formatters
+│   │       ├── detail/               # Public detail page sub-components
+│   │       │   ├── DetailAbout.jsx   # Description section
+│   │       │   ├── DetailGrid.jsx    # Metadata grid (venue, dates, team size)
+│   │       │   ├── DetailHeader.jsx  # Back button and creator banner
+│   │       │   ├── DetailHero.jsx    # Banner hero with title
+│   │       │   ├── DetailTimeline.jsx# Timeline section
+│   │       │   ├── PrizesCard.jsx    # Prize pool display
+│   │       │   ├── QuickInfoCard.jsx # Venue, team size, format sidebar card
+│   │       │   └── RegistrationStatusCard.jsx # Countdown timer & "Register Now" CTA
+│   │       ├── explore/              # Explorer sub-components
+│   │       │   ├── EmptyHackathons.jsx# Zero-state empty filter display
+│   │       │   ├── ExploreFilters.jsx # Dropdown filters for type, city, deadline
+│   │       │   ├── ExploreHeader.jsx  # Header with count of available events
+│   │       │   └── HackathonCard.jsx  # Card with banner, days left, tags, venue
+│   │       └── register/             # Team registration sub-components
+│   │           ├── AlreadyRegisteredAlert.jsx
+│   │           ├── CreateTeamForm.jsx
+│   │           ├── JoinTeamForm.jsx
+│   │           ├── RegisterHeader.jsx
+│   │           ├── RegisterTabNav.jsx
+│   │           └── UserRegistrationsList.jsx
+│   │
+│   ├── hosting/                      # Hackathon Creation
+│   │   └── page.jsx                  # Multipart form to host a new hackathon
+│   │
+│   ├── registration/[id]/            # Team Submission Portal
+│   │   ├── page.jsx                  # Team view, invite code sharing, PDF idea submission
+│   │   └── components/               # Registration detail widgets
+│   │       ├── IdeaSubmissionSection.jsx # PDF file uploader with min-team gate
+│   │       ├── RegistrationError.jsx
+│   │       ├── RegistrationHeader.jsx
+│   │       ├── RegistrationLoading.jsx
+│   │       ├── TeamInfoCard.jsx      # Team name, invite code, ID, status
+│   │       ├── TeamMembersSection.jsx# Leader & member roster with role icons
+│   │       ├── index.js              # Re-exports
+│   │       └── utils.js              # Date format helper
+│   │
+│   └── teams/[id]/                   # Extended Team View
+│       └── page.jsx                  # Roster view powered by teams/team_members table
+│
+├── components/                       # Shared UI Components
+│   ├── Background.jsx                # Ambient glassmorphism gradient orbs & circuit grid
+│   ├── Loader.jsx                    # Reusable animated SVG spinner
+│   └── Navbar.jsx                    # Navigation bar with Clerk authentication controls
+│
+├── lib/
+│   └── supabase.js                   # Supabase singleton client with service role key
+│
+└── supabase/
+    ├── config.toml                   # Supabase local CLI config
+    └── migrations/
+        └── 20260815190743_create_users.sql # Initial database migration
 ```
 
-| Layer | Technology | Description |
-| :--- | :--- | :--- |
-| **Frontend Framework** | **Next.js 15.3.5 (App Router)** | Hybrid client and server components, server-side data handling, Turbopack support. |
-| **UI Library** | **React 19** | Modern React primitives, hooks, state management. |
-| **Styling & Icons** | **TailwindCSS v4**, **Lucide React** | Sleek glassmorphism aesthetic, custom gradient text, dark theme, responsive grid layouts. |
-| **Authentication** | **Clerk (`@clerk/nextjs` v6)** | Authentication, session token management, user profile modal, server-side route matcher. |
-| **Webhook Security** | **Svix v1.69.0** | Cryptographic HMAC signature verification of incoming Clerk lifecycle webhooks. |
-| **Database** | **Supabase (PostgreSQL)** | Relational database with Foreign Keys, Cascades, GIN Indexes, Triggers, and RLS. |
-| **File Storage** | **Supabase Storage** | Public buckets: `hackathons` (banners/pfps) and `registrations` (idea proposal PDFs). |
-| **Document Processing** | **`pdf-parse` (v1.1.1)** | Server-side binary PDF parsing and text buffer extraction. |
-| **AI Inference** | **Hugging Face Inference API (`@huggingface/inference`)** | Model: `mistralai/Mistral-7B-Instruct-v0.3` for automated multi-document evaluation and ranking. |
+### 3.2 Frontend vs Backend Separation
+- **Frontend Layer**: Built exclusively using React 19 Client Components (`"use client"`). All client components communicate with the backend via standard `fetch()` calls to `/api/*` endpoints. Client state is managed locally via React hooks (`useState`, `useEffect`, `useRouter`, `useParams`).
+- **Backend API Layer**: Implemented as Next.js Route Handlers (`route.js`) inside `app/api/`. These execute strictly on the Node.js server runtime (`export const runtime = 'nodejs';`).
+- **Database Access Pattern**: The backend accesses Supabase using the service role key (`SUPABASE_SERVICE_ROLE_KEY`), bypassing PostgreSQL Row Level Security (RLS) while enforcing user authentication and authorization logic inside route handlers using Clerk's `await auth()`.
 
 ---
 
-## 4. Database Architecture & Schema
+## 4. Database Schema & Data Models
 
-The database is built on PostgreSQL hosted via Supabase. All tables enforce strict foreign key constraints, cascading deletions, and automatic `updated_at` triggers.
+The entire database runs on PostgreSQL managed via Supabase. All schemas, triggers, indexes, and storage buckets are declared in [supabase_schema.sql](file:///c:/Users/yatis/Desktop/HackNect/HackNect/supabase_schema.sql).
+
+### 4.1 Entity Relationship Diagram
 
 ```mermaid
 erDiagram
-    USERS ||--o{ HACKATHONS : "creates"
-    USERS ||--o{ REGISTRATIONS : "leads"
-    HACKATHONS ||--o{ REGISTRATIONS : "has"
-    HACKATHONS ||--o{ SHORTLISTS : "contains"
-    REGISTRATIONS ||--o{ SHORTLISTS : "selected_in"
-    HACKATHONS ||--o{ TEAMS : "hosts"
-    TEAMS ||--o{ TEAM_MEMBERS : "contains"
-    USERS ||--o{ TEAM_MEMBERS : "belongs_to"
+    users ||--o{ hackathons : "creates"
+    users ||--o{ registrations : "leads (team_leader_id)"
+    hackathons ||--o{ registrations : "contains"
+    hackathons ||--o{ shortlists : "shortlists"
+    registrations ||--o{ shortlists : "awarded"
+    hackathons ||--o{ teams : "organizes"
+    teams ||--o{ team_members : "has"
+    users ||--o{ team_members : "joins"
 
-    USERS {
-        uuid id PK
-        text clerk_id UK
-        text name
-        text email
-        timestamptz created_at
-        timestamptz updated_at
+    users {
+        UUID id PK "gen_random_uuid()"
+        TEXT clerk_id UK "Unique Clerk user identifier"
+        TEXT name "Full name"
+        TEXT email "Email address"
+        TIMESTAMPTZ created_at
+        TIMESTAMPTZ updated_at
     }
 
-    HACKATHONS {
-        uuid id PK
-        uuid creator_id FK
-        text title
-        text description
-        integer team_min
-        integer team_max
-        integer top_n_selections
-        timestamptz registration_deadline
-        text venue
-        text prizes
-        text timeline
-        text banner_url
-        text pfp_url
-        timestamptz created_at
-        timestamptz updated_at
+    hackathons {
+        UUID id PK "gen_random_uuid()"
+        UUID creator_id FK "References users(id) ON DELETE CASCADE"
+        TEXT title "Title of hackathon"
+        TEXT description "Detailed overview"
+        INTEGER team_min "Minimum team size (default 1)"
+        INTEGER team_max "Maximum team size (default 4)"
+        INTEGER top_n_selections "Number of teams to shortlist"
+        TIMESTAMPTZ registration_deadline "Cutoff timestamp"
+        TEXT venue "e.g., 'Virtual Event' or 'Tech Park, Bangalore, India'"
+        TEXT prizes "Prizes description"
+        TEXT timeline "Schedule description"
+        TEXT banner_url "Public URL to Supabase storage"
+        TEXT pfp_url "Public URL to Supabase storage"
+        TIMESTAMPTZ created_at
+        TIMESTAMPTZ updated_at
     }
 
-    REGISTRATIONS {
-        uuid id PK
-        uuid hackathon_id FK
-        uuid team_leader_id FK
-        text team_name
-        uuid_array teammates
-        varchar invite_code UK
-        text idea_pdf_url
-        timestamptz submitted_at
-        timestamptz created_at
-        timestamptz updated_at
+    registrations {
+        UUID id PK "gen_random_uuid()"
+        UUID hackathon_id FK "References hackathons(id) ON DELETE CASCADE"
+        UUID team_leader_id FK "References users(id) ON DELETE CASCADE"
+        TEXT team_name "Team Name"
+        UUID_ARRAY teammates "Array of user UUIDs: [team_leader_id, ...]"
+        VARCHAR_10 invite_code UK "Unique 8-char uppercase invite code"
+        TEXT idea_pdf_url "Public URL to uploaded proposal PDF"
+        INTEGER score "AI evaluation score (0-100)"
+        TIMESTAMPTZ submitted_at
+        TIMESTAMPTZ created_at
+        TIMESTAMPTZ updated_at
     }
 
-    SHORTLISTS {
-        uuid id PK
-        uuid hackathon_id FK
-        uuid registration_id FK
-        timestamptz created_at
+    shortlists {
+        UUID id PK "gen_random_uuid()"
+        UUID hackathon_id FK "References hackathons(id) ON DELETE CASCADE"
+        UUID registration_id FK "References registrations(id) ON DELETE CASCADE"
+        TIMESTAMPTZ created_at
     }
 
-    TEAMS {
-        uuid id PK
-        uuid hackathon_id FK
-        text name
-        varchar invite_code UK
-        timestamptz created_at
-        timestamptz updated_at
+    teams {
+        UUID id PK "gen_random_uuid()"
+        UUID hackathon_id FK "References hackathons(id) ON DELETE CASCADE"
+        TEXT name "Team name"
+        VARCHAR_10 invite_code UK "Unique invite code"
+        TIMESTAMPTZ created_at
+        TIMESTAMPTZ updated_at
     }
 
-    TEAM_MEMBERS {
-        uuid id PK
-        uuid team_id FK
-        uuid user_id FK
-        text role
-        timestamptz joined_at
-        timestamptz created_at
+    team_members {
+        UUID id PK "gen_random_uuid()"
+        UUID team_id FK "References teams(id) ON DELETE CASCADE"
+        UUID user_id FK "References users(id) ON DELETE CASCADE"
+        TEXT role "Role: 'leader' or 'member'"
+        TIMESTAMPTZ joined_at
+        TIMESTAMPTZ created_at
     }
 ```
 
-### 4.1 Schema Specifications
+### 4.2 Database Tables Specification
 
 #### 1. `public.users`
-Stores user profile records synchronized directly from Clerk via Svix-verified webhooks.
-- `id` (`UUID`, Primary Key, default `gen_random_uuid()`)
-- `clerk_id` (`TEXT`, UNIQUE, Indexed) — Clerk external user identifier.
-- `name` (`TEXT`) — Combined first and last name or username.
-- `email` (`TEXT`, Indexed) — Primary email address.
-- `created_at` / `updated_at` (`TIMESTAMPTZ`)
+Stores user profile information synced directly from Clerk via webhooks.
+- `id` (`UUID`, PK, `gen_random_uuid()`): Internal Supabase user identifier used across all foreign keys.
+- `clerk_id` (`TEXT`, UNIQUE, NOT NULL): External user ID from Clerk (e.g., `user_2t...`). Indexed (`idx_users_clerk_id`).
+- `name` (`TEXT`): User's full name or username.
+- `email` (`TEXT`): User's primary email address. Indexed (`idx_users_email`).
+- `created_at` / `updated_at` (`TIMESTAMPTZ`): Managed automatically by the `update_updated_at_column()` trigger.
 
 #### 2. `public.hackathons`
-Stores all hackathon events published by creators.
-- `id` (`UUID`, Primary Key)
-- `creator_id` (`UUID`, Foreign Key -> `users.id` ON DELETE CASCADE)
-- `title` (`TEXT`, NOT NULL)
-- `description` (`TEXT`)
-- `team_min` (`INTEGER`, Default 1)
-- `team_max` (`INTEGER`, Default 4)
-- `top_n_selections` (`INTEGER`) — Target quota for AI first-round selections.
-- `registration_deadline` (`TIMESTAMPTZ`)
-- `venue` (`TEXT`) — `"Virtual Event"` or `"<Detailed Venue>, <City>, India"`.
-- `prizes` (`TEXT`), `timeline` (`TEXT`)
-- `banner_url` (`TEXT`), `pfp_url` (`TEXT`)
-- `created_at` / `updated_at` (`TIMESTAMPTZ`)
+Stores hackathons hosted by organizers.
+- `id` (`UUID`, PK, `gen_random_uuid()`).
+- `creator_id` (`UUID`, NOT NULL, FK -> `users.id` ON DELETE CASCADE): Constraint named `hackathons_creator_id_fkey` to facilitate PostgREST join queries: `users!hackathons_creator_id_fkey(id, name, email)`.
+- `title` (`TEXT`, NOT NULL).
+- `description` (`TEXT`).
+- `team_min` (`INTEGER`, DEFAULT 1): Minimum participants required to submit an idea.
+- `team_max` (`INTEGER`, DEFAULT 4): Maximum participants allowed in a team.
+- `top_n_selections` (`INTEGER`): Desired number of winning teams for AI shortlisting.
+- `registration_deadline` (`TIMESTAMPTZ`): Indexed (`idx_hackathons_deadline`).
+- `venue` (`TEXT`): Either `"Virtual Event"` or `"${detailed_venue}, ${city}, India"`.
+- `prizes` (`TEXT`): Freeform prize details.
+- `timeline` (`TEXT`): Event schedule.
+- `banner_url` (`TEXT`): Public URL to image stored in `storage.buckets['hackathons']`.
+- `pfp_url` (`TEXT`): Public URL to organizer avatar stored in `storage.buckets['hackathons']`.
+- `created_at` / `updated_at` (`TIMESTAMPTZ`).
 
 #### 3. `public.registrations`
-Tracks team registrations for each hackathon.
-- `id` (`UUID`, Primary Key)
-- `hackathon_id` (`UUID`, Foreign Key -> `hackathons.id` ON DELETE CASCADE)
-- `team_leader_id` (`UUID`, Foreign Key -> `users.id` ON DELETE CASCADE)
-- `team_name` (`TEXT`, NOT NULL)
-- `teammates` (`UUID[]`, Default `{}`) — Indexed with PostgreSQL **GIN** index (`idx_registrations_teammates_gin`) for high-performance array containment lookups (`teammates.cs.{userId}`).
-- `invite_code` (`VARCHAR(10)`, UNIQUE, Indexed) — 8-character random alphanumeric code.
-- `idea_pdf_url` (`TEXT`, Indexed) — Public URL to the uploaded proposal PDF in Supabase Storage.
-- `submitted_at` / `created_at` / `updated_at` (`TIMESTAMPTZ`)
+The primary operational table representing a team and its hackathon entry.
+- `id` (`UUID`, PK, `gen_random_uuid()`).
+- `hackathon_id` (`UUID`, NOT NULL, FK -> `hackathons.id` ON DELETE CASCADE, constraint: `registrations_hackathon_id_fkey`).
+- `team_leader_id` (`UUID`, NOT NULL, FK -> `users.id` ON DELETE CASCADE, constraint: `registrations_team_leader_id_fkey`).
+- `team_name` (`TEXT`, NOT NULL).
+- `teammates` (`UUID[]`, NOT NULL, DEFAULT `'{}'::UUID[]`): Array of Supabase user UUIDs. Indexed with a PostgreSQL GIN index (`idx_registrations_teammates_gin`) for ultra-fast array containment checks: `teammates.cs.{userId}`.
+- `invite_code` (`VARCHAR(10)`, UNIQUE): 8-character uppercase string used by others to join the team.
+- `idea_pdf_url` (`TEXT`): Public storage URL for the submitted proposal PDF in bucket `registrations`.
+- `score` (`INTEGER`, DEFAULT NULL): 0–100 score awarded by Gemini during AI shortlisting. Indexed (`idx_registrations_score`).
+- `submitted_at` (`TIMESTAMPTZ`): Timestamp of team creation.
+- `created_at` / `updated_at` (`TIMESTAMPTZ`).
 
 #### 4. `public.shortlists`
-Stores the output of the AI shortlisting algorithm.
-- `id` (`UUID`, Primary Key)
-- `hackathon_id` (`UUID`, Foreign Key -> `hackathons.id` ON DELETE CASCADE)
-- `registration_id` (`UUID`, Foreign Key -> `registrations.id` ON DELETE CASCADE)
-- `created_at` (`TIMESTAMPTZ`)
-- **Constraint**: `UNIQUE (hackathon_id, registration_id)` ensures idempotent shortlist insertion.
+Stores the output of the automated AI shortlisting process.
+- `id` (`UUID`, PK, `gen_random_uuid()`).
+- `hackathon_id` (`UUID`, NOT NULL, FK -> `hackathons.id` ON DELETE CASCADE).
+- `registration_id` (`UUID`, NOT NULL, FK -> `registrations.id` ON DELETE CASCADE).
+- `created_at` (`TIMESTAMPTZ`).
+- `CONSTRAINT shortlists_hackathon_registration_unique UNIQUE (hackathon_id, registration_id)`: Prevents duplicate shortlisting of the same team.
 
 #### 5. `public.teams` & `public.team_members`
-Normalized relational structure for extended team rosters and granular roles (`leader`, `member`).
+Secondary/extended team relational schema (see [Section 10](#10-architectural-nuances-discrepancies--recommendations)):
+- `teams`: `id`, `hackathon_id`, `name`, `invite_code`, `created_at`, `updated_at`.
+- `team_members`: `id`, `team_id`, `user_id`, `role` (`'leader'` | `'member'`), `joined_at`, `created_at`. Unique constraint on `(team_id, user_id)`.
 
-### 4.2 Storage Buckets
-- `hackathons`: Stores event banner and profile picture images under `/banners/` and `/pfps/`.
-- `registrations`: Stores team project proposal PDFs under `/pdfs/`.
+### 4.3 Supabase Storage Buckets
+Two public storage buckets are configured in [supabase_schema.sql](file:///c:/Users/yatis/Desktop/HackNect/HackNect/supabase_schema.sql):
+1. **`hackathons`**:
+   - `banners/${uuid}.${ext}`: Event banner images.
+   - `pfps/${uuid}.${ext}`: Organizer avatar images.
+2. **`registrations`**:
+   - `pdfs/${registration_id}_${timestamp}.${ext}`: Team idea proposal PDFs.
+- Both buckets have public `SELECT` policies enabled, allowing public URL retrieval via `supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl`.
 
 ---
 
-## 5. API Endpoints & Request / Response Specifications
+## 5. End-to-End Workflows & User Journeys
 
-All internal APIs reside in `app/api/**` and use standard Next.js Route Handlers (`Response` / `NextResponse`).
+### 5.1 Workflow 1: User Onboarding & Clerk Sync
+```
+User registers via Clerk Modal -> Clerk sends HTTP POST to /api/clerk/webhook
+  -> Verify svix signature using process.env.CLERK_WEBHOOK_SECRET
+  -> Parse event: 'user.created' or 'user.updated'
+  -> Upsert into public.users (clerk_id, name, email) onConflict 'clerk_id'
+```
+1. A new user clicks "Get Started" on the Navbar ([`Navbar.jsx`](file:///c:/Users/yatis/Desktop/HackNect/HackNect/components/Navbar.jsx)).
+2. Clerk handles OAuth or email authentication and generates a Clerk ID (e.g., `user_abc123`).
+3. Clerk triggers a webhook to `POST /api/clerk/webhook` (or alias `/api/webhook/register`).
+4. The handler reads raw buffer payload, verifies the signature with `svix`, and upserts into `public.users`.
+5. Future API calls use `@clerk/nextjs/server` `auth()` to extract `userId` and query `public.users.clerk_id == userId` to resolve the internal Supabase UUID.
 
-### 5.1 Authentication & User Webhooks
+### 5.2 Workflow 2: Hosting a Hackathon
+```
+Organizer visits /hosting -> Fills HackathonForm (multipart/form-data)
+  -> Calls POST /api/hackathons
+  -> Server authenticates user -> Resolves Supabase UUID
+  -> Uploads banner_url & pfp_url to Supabase Storage ('hackathons' bucket)
+  -> Inserts row into public.hackathons
+  -> Redirects organizer to /creator-dash
+```
+1. Organizer navigates to `/hosting`.
+2. Fills in title, description, event type (`Virtual` vs `Offline`), city, team limits (`team_min`, `team_max`), `top_n_selections`, deadline, prizes, timeline, and uploads banner/avatar images.
+3. Form submits `multipart/form-data` to `POST /api/hackathons`.
+4. API generates UUID-based filenames and uploads files to the `hackathons` bucket.
+5. Record is inserted into `public.hackathons` with `creator_id = userData.id`.
+6. Organizer is redirected to `/creator-dash` where the hackathon appears immediately.
 
-#### `POST /api/clerk/webhook` & `/api/webhook/register`
-- **Purpose**: Listens to Clerk user events to synchronize user data into Supabase `public.users`.
-- **Security**: Validates `svix-id`, `svix-timestamp`, and `svix-signature` using `CLERK_WEBHOOK_SECRET`.
-- **Handled Events**:
-  - `user.created` / `user.updated`: Upserts `{ clerk_id, name, email }` on conflict `clerk_id`.
+### 5.3 Workflow 3: Discovering & Exploring Hackathons
+```
+User visits /explore -> Calls GET /api/hackathons/public
+  -> Fetches all hackathons joined with creator profile and registration counts
+  -> Client filter logic filters out expired deadlines, filters by event type, city, timeframe
+  -> User clicks a HackathonCard -> Navigates to /explore/[id]
+  -> Calls GET /api/hackathons/public/[id] -> Renders details, prizes, timeline & countdown
+```
+1. Participant accesses `/explore`.
+2. The page calls `GET /api/hackathons/public`, which returns all hackathons along with `teamsCount`.
+3. Client-side filters ([`ExploreFilters.jsx`](file:///c:/Users/yatis/Desktop/HackNect/HackNect/app/explore/components/explore/ExploreFilters.jsx)) dynamically filter the listing by virtual/offline, city, and deadline range.
+4. Clicking a card navigates to `/explore/[id]`, displaying the countdown timer, prizes, timeline, and an interactive "Register Now" CTA.
+
+### 5.4 Workflow 4: Team Registration & Invite-Code Join
+```
+User clicks "Register Now" -> Navigates to /explore/[id]/register
+  -> Option A: Create Team
+       -> Submits teamName -> POST /api/teams { action: 'create', teamName, hackathonId }
+       -> Generates unique 8-char inviteCode
+       -> Inserts into public.registrations with teammates = [userData.id]
+       -> Displays invite code to leader
+  -> Option B: Join Team
+       -> Submits inviteCode -> POST /api/teams { action: 'join', inviteCode }
+       -> Validates invite code & checks if hackathon team_max limit reached
+       -> Appends userData.id to teammates array in public.registrations
+```
+1. From `/explore/[id]/register`, a user can either:
+   - **Create a Team**: Submits a team name. Server ensures the user is not already registered for this hackathon, generates an 8-character code (via `generateInviteCode()`), inserts into `registrations` with `team_leader_id = user.id` and `teammates = [user.id]`.
+   - **Join an Existing Team**: Submits an 8-character invite code. Server finds the registration, verifies team size has not exceeded `hackathons.team_max`, verifies the user isn't already registered for this event, and appends `user.id` to `registrations.teammates`.
+2. The team appears in the user's dashboard and right-hand list with a link to `/registration/[registrationId]`.
+
+### 5.5 Workflow 5: Idea PDF Submission & Team Size Gating
+```
+Team member visits /registration/[id] -> Calls GET /api/registrations/[id]
+  -> Verifies user is team_leader_id OR in teammates[]
+  -> Evaluates: currentMemberCount >= hackathon.team_min
+  -> IF team size < team_min:
+       -> Submission is LOCKED with alert banner and invite code copy button
+  -> IF team size >= team_min AND user is team_leader:
+       -> Submission is UNLOCKED
+       -> Leader uploads PDF -> PUT /api/registrations/[id] (multipart FormData)
+       -> File uploaded to 'registrations' storage bucket
+       -> public.registrations.idea_pdf_url updated
+  -> IF team size >= team_min AND user is NOT team_leader:
+       -> Displays "Awaiting Idea PDF Submission from Team Leader" or link to current PDF
+```
+1. Only authenticated team members can view the page.
+2. The page computes `currentMemberCount` from unique members in `[team_leader_id, ...teammates]`.
+3. If `currentMemberCount < team_min`, the submission input is disabled and a lock badge informs the team how many more members are needed.
+4. Once the team reaches `team_min`, the team leader can upload a PDF (pitch deck/proposal). The file is stored in `storage.buckets['registrations']` under `pdfs/${id}_${Date.now()}.pdf`, and `registrations.idea_pdf_url` is updated.
+
+### 5.6 Workflow 6: Automated AI Shortlisting
+```
+Organizer opens /creator-dash/[id] -> Clicks "Shortlisted" tab
+  -> Clicks "Shortlist Best N Ideas" button
+  -> POST /api/shortlist-ideas { hackathonId, n: top_n_selections, pdfUrls: [...] }
+       1. pdfParser downloads each PDF and extracts text via pdf-parse
+       2. scorer.js truncates text to 8000 chars, calls Gemini 3.5 Flash Lite
+          with standardized 100-pt rubric (Innovation: 30, Social: 25, Feasibility: 25, Execution: 20)
+       3. Regex parses numeric integer score (0-100)
+       4. rankAndShortlist sorts descending and picks top N
+       5. database.js updates public.registrations.score for all submissions
+       6. database.js deletes previous shortlists and inserts winners into public.shortlists
+  -> Creator dashboard re-fetches registrations and shortlisted teams
+  -> Shortlisted teams display score badges and ranks
+```
+
+---
+
+## 6. Complete API Reference
+
+All routes return JSON responses with standard status codes. Unless marked `Public`, endpoints require Clerk authentication headers/cookies.
+
+### 6.1 Authentication Webhook
+
+#### `POST /api/clerk/webhook` (Alias: `POST /api/webhook/register`)
+- **Description**: Webhook listener for Clerk user events. Synchronizes users to Supabase.
+- **Authentication**: Verified via `svix` using `CLERK_WEBHOOK_SECRET`.
+- **Request Headers**: `svix-id`, `svix-timestamp`, `svix-signature`.
+- **Supported Events**:
+  - `user.created` / `user.updated`: Upserts `{ clerk_id, name, email }` into `public.users`.
   - `user.deleted`: Deletes record matching `clerk_id`.
-- **Response**: `200 User saved` | `400 Invalid signature` | `500 Server misconfigured`
+- **Response**:
+  - `200 OK`: `User saved` / `User deleted` / `Webhook processed`.
+  - `400 Bad Request`: `Invalid signature`.
+  - `500 Internal Server Error`: `Server misconfigured` or `Error saving user`.
 
 ---
 
-### 5.2 Hackathons Endpoints
+### 6.2 Hackathon Management APIs
 
 #### `GET /api/hackathons`
-- **Auth**: Requires Clerk session.
-- **Description**: Returns all hackathons created by the authenticated user (`creator_id`).
-- **Response**:
+- **Description**: Returns all hackathons created by the currently authenticated user.
+- **Auth**: Authenticated user.
+- **Response `200 OK`**:
 ```json
 {
   "success": true,
@@ -247,345 +512,402 @@ All internal APIs reside in `app/api/**` and use standard Next.js Route Handlers
     {
       "id": "uuid",
       "creator_id": "uuid",
-      "title": "AI Nexus Hackathon",
+      "title": "HackIndia 2026",
       "description": "...",
       "team_min": 2,
       "team_max": 4,
-      "top_n_selections": 5,
-      "registration_deadline": "2026-09-30T18:30:00Z",
-      "venue": "Tech Park, Bangalore, India",
+      "top_n_selections": 10,
+      "registration_deadline": "2026-11-01T18:30:00.000Z",
+      "venue": "Bangalore, India",
+      "prizes": "₹5,00,000",
+      "timeline": "Nov 1 - Nov 3",
       "banner_url": "https://...",
-      "pfp_url": "https://..."
+      "pfp_url": "https://...",
+      "created_at": "...",
+      "updated_at": "..."
     }
   ]
 }
 ```
 
 #### `POST /api/hackathons`
-- **Auth**: Requires Clerk session.
-- **Content-Type**: `multipart/form-data`
-- **Payload**: `title`, `description`, `team_min`, `team_max`, `top_n_selections`, `registration_deadline`, `venue`, `prizes`, `timeline`, `banner_url` (File), `pfp_url` (File).
-- **Processing**: Uploads files to Supabase `hackathons` bucket, then inserts metadata into `public.hackathons` linked to authenticated `users.id`.
-- **Response**: `201 Created`
+- **Description**: Creates a new hackathon.
+- **Auth**: Authenticated user (becomes `creator_id`).
+- **Request**: `multipart/form-data`
+  - `title` (string, required)
+  - `description` (string)
+  - `team_min` (integer string)
+  - `team_max` (integer string)
+  - `top_n_selections` (integer string)
+  - `registration_deadline` (ISO datetime string, required)
+  - `venue` (string, required)
+  - `prizes` (string)
+  - `timeline` (string)
+  - `banner_url` (File, optional)
+  - `pfp_url` (File, optional)
+- **Response**: `201 Created` with created hackathon object.
 
 #### `GET /api/hackathons/[id]`
-- **Auth**: Requires Clerk session.
-- **Description**: Fetches a single hackathon and checks whether the authenticated user is the creator (`isCreator`).
+- **Description**: Retrieves hackathon details and checks if the calling user is the creator.
+- **Auth**: Authenticated user.
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "data": { ...hackathonFields },
+  "isCreator": true
+}
+```
 
 #### `PUT /api/hackathons/[id]`
-- **Auth**: Requires Clerk session (must match `creator_id`).
-- **Content-Type**: `multipart/form-data`
-- **Description**: Updates hackathon metadata and optionally replaces banner/pfp assets in storage.
-
-#### `GET /api/hackathons/public`
-- **Auth**: Public access.
-- **Description**: Returns all hackathons ordered by `created_at DESC` with joined registration counts (`teamsCount` / `teams_count`).
-
-#### `GET /api/hackathons/public/[id]`
-- **Auth**: Public access.
-- **Description**: Returns full public details of a specific hackathon, including creator info and registered team count.
+- **Description**: Updates an existing hackathon. Only permitted if calling user matches `creator_id`.
+- **Auth**: Authenticated creator.
+- **Request**: `multipart/form-data` with fields to update (and optional new banner/pfp files).
+- **Response**: `200 OK` with updated hackathon object.
 
 #### `GET /api/hackathons/[id]/registrations`
-- **Auth**: Requires creator session for `[id]`.
-- **Description**: Retrieves all teams registered for the hackathon, including team leader profile and all teammates' profile details (`id, name, email`).
+- **Description**: Retrieves all team registrations for a hackathon, including team leader details and full teammate user profiles.
+- **Auth**: Authenticated creator only (returns `403` otherwise).
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "registration-uuid",
+      "hackathon_id": "hackathon-uuid",
+      "team_leader_id": "user-uuid",
+      "team_name": "Binary Beasts",
+      "teammates": [
+        { "id": "uuid-1", "name": "Alice", "email": "alice@test.com" },
+        { "id": "uuid-2", "name": "Bob", "email": "bob@test.com" }
+      ],
+      "invite_code": "X9K2P1L0",
+      "idea_pdf_url": "https://...",
+      "score": 88,
+      "submitted_at": "2026-10-14T10:00:00Z",
+      "team_leader": { "id": "uuid-1", "name": "Alice", "email": "alice@test.com" }
+    }
+  ]
+}
+```
 
 #### `GET /api/hackathons/[id]/shortlisted`
-- **Auth**: Requires creator session for `[id]`.
-- **Description**: Fetches detailed team information for registrations present in `public.shortlists` for that hackathon.
+- **Description**: Retrieves all teams shortlisted in `public.shortlists` for a given hackathon.
+- **Auth**: Authenticated creator only.
+- **Response `200 OK`**: Array of registration objects (same format as `/registrations`).
 
 ---
 
-### 5.3 Teams & Registrations Endpoints
+### 6.3 Public Hackathon APIs
+
+#### `GET /api/hackathons/public`
+- **Description**: Returns all hackathons with creator details and total team count (`teamsCount`).
+- **Auth**: Public (No auth required).
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "uuid",
+      "title": "AI Nexus 2026",
+      "teamsCount": 14,
+      "teams_count": 14,
+      "creator": { "id": "uuid", "name": "Organizer Name", "email": "org@test.com" },
+      "registration_deadline": "2026-12-01T00:00:00Z",
+      "venue": "Virtual Event"
+    }
+  ]
+}
+```
+
+#### `GET /api/hackathons/public/[id]`
+- **Description**: Returns single hackathon public details, creator profile, and `teamsCount`.
+- **Auth**: Public.
+- **Response `200 OK`**: `{ success: true, data: { ...hackathon, teamsCount: 14 } }`.
+
+---
+
+### 6.4 Registration & Team APIs
 
 #### `GET /api/teams`
-- **Auth**: Requires Clerk session.
-- **Description**: Retrieves all registrations where the user is either the `team_leader_id` or present in the `teammates` UUID array.
-- **Query Filter**: `.or('team_leader_id.eq.${userData.id},teammates.cs.{${userData.id}}')`
+- **Description**: Returns all hackathon registrations where the authenticated user is either the `team_leader_id` OR in the `teammates` array.
+- **Auth**: Authenticated user.
+- **Query Filter**: `team_leader_id.eq.${userData.id},teammates.cs.{${userData.id}}`.
+- **Response `200 OK`**: Array of registrations with nested `hackathons (id, title, registration_deadline)`.
 
 #### `POST /api/teams`
-- **Auth**: Requires Clerk session.
-- **Payload**:
-  - **Create Action**:
+- **Description**: Handles team creation or team joining via invite code.
+- **Auth**: Authenticated user.
+- **Action 1: Create Team**
+  - **Payload**:
     ```json
-    { "action": "create", "teamName": "ByteBusters", "hackathonId": "uuid" }
+    { "action": "create", "teamName": "CyberDevs", "hackathonId": "hackathon-uuid" }
     ```
-    *Validation*: Checks user isn't already registered for this hackathon; generates unique 8-char invite code; inserts registration with leader as first teammate.
-  - **Join Action**:
+  - **Rules**: Rejects if user is already registered for this hackathon. Generates unique 8-character code.
+  - **Response `201 Created`**:
     ```json
-    { "action": "join", "inviteCode": "A1B2C3D4" }
+    {
+      "success": true,
+      "data": {
+        "registration": { "id": "uuid", "team_name": "CyberDevs", ... },
+        "inviteCode": "8CHARCOD"
+      }
+    }
     ```
-    *Validation*: Checks code validity, verifies user is not already registered in this or another team for the same hackathon, enforces `team_max` limit, appends `user.id` to `teammates` array.
+- **Action 2: Join Team**
+  - **Payload**:
+    ```json
+    { "action": "join", "inviteCode": "8CHARCOD" }
+    ```
+  - **Rules**: Rejects if code invalid, if user is already in the team, if user is already registered for this hackathon in another team, or if `currentTeamSize > hackathon.team_max`.
+  - **Response `200 OK`**: `{ success: true, data: { registration: { ... }, message: "..." } }`.
 
 #### `GET /api/registrations/[id]`
-- **Auth**: Requires Clerk session (user must be team leader or teammate in this registration).
-- **Description**: Returns registration record, associated hackathon details, full teammate objects, and flags (`isTeamLeader`, `currentUserId`).
+- **Description**: Detailed registration lookup for participants.
+- **Auth**: Authenticated user who must be `team_leader_id` or present in `teammates`.
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "data": {
+    "registration": { ... },
+    "teammates": [ { "id": "uuid", "name": "...", "email": "..." } ],
+    "isTeamLeader": true,
+    "currentUserId": "user-uuid"
+  }
+}
+```
 
 #### `PUT /api/registrations/[id]`
-- **Auth**: Requires Clerk session (must be `team_leader_id`).
-- **Content-Type**: `multipart/form-data` (`pdf` File).
-- **Validation**:
-  - Verifies current member count $\ge$ `hackathons.team_min`.
-  - Verifies file type is `application/pdf`.
-- **Processing**: Uploads PDF to Supabase `registrations` bucket under `pdfs/${id}_${Date.now()}.pdf`, updates `idea_pdf_url` on `public.registrations`.
-- **Response**: `200 { "success": true, "url": "https://..." }`
+- **Description**: Uploads idea PDF submission.
+- **Auth**: Authenticated team leader only (`team_leader_id == user.id`).
+- **Validation**: Enforces `currentMemberCount >= hackathon.team_min`. Rejects non-PDF files.
+- **Payload**: `multipart/form-data` with `pdf` File.
+- **Response `200 OK`**: `{ success: true, url: "https://...publicUrl" }`.
 
----
-
-### 5.4 AI Shortlisting & Scoring Endpoints
-
-#### `POST /api/shortlist-ideas`
-- **Payload**:
-  ```json
-  {
-    "pdfUrls": ["https://.../pdf1.pdf", "https://.../pdf2.pdf"],
-    "n": 3
-  }
-  ```
-- **Execution Pipeline**:
-  1. **Validation**: Ensures valid URL format and limits array size ($\le 20$).
-  2. **PDF Text Extraction**: Fetches each PDF using `fetch()` and parses content with `pdfParse(buffer)`.
-  3. **Content Filtering**: Discards empty or unreadable PDFs ($< 10$ characters).
-  4. **LLM Evaluation**: Constructs a structured prompt containing the first 2,000 characters of each idea and invokes Hugging Face `mistralai/Mistral-7B-Instruct-v0.3`.
-  5. **Fallback Strategy**:
-     - Attempt 1: `client.chatCompletion(...)`
-     - Attempt 2: `client.textGeneration(...)`
-     - Attempt 3: Deterministic fallback to initial $N$ valid submissions if AI API is unreachable.
-  6. **Regex & Index Parsing**: Extracts JSON array `[1, 3, 2]` from LLM response and maps to the corresponding PDF URLs.
-  7. **Persistence**: Deletes old shortlists for the hackathon and inserts new rows into `public.shortlists`.
-- **Response**:
-  ```json
-  {
-    "success": true,
-    "shortlisted": ["https://.../pdf1.pdf", "https://.../pdf3.pdf"]
-  }
-  ```
+#### `GET /api/teams/[id]/members`
+- **Description**: Queries the extended `teams` and `team_members` tables.
+- **Auth**: Authenticated member of the team.
+- **Response `200 OK`**: `{ success: true, data: { team: { ... }, members: [ ... ] } }`.
 
 #### `POST /api/shortlists/user-wins`
-- **Payload**: `{ "registrationIds": ["uuid1", "uuid2", ...] }`
-- **Description**: Returns exact count of user registrations that have been shortlisted (`count`).
+- **Description**: Counts how many of the provided registration IDs are present in `public.shortlists`.
+- **Payload**: `{ "registrationIds": ["uuid-1", "uuid-2"] }`.
+- **Response `200 OK`**: `{ "count": 2 }`.
 
 ---
 
-## 6. End-to-End Workflows
+### 6.5 AI Shortlisting API
 
-### 6.1 Participant Registration & Submission Flow
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor Participant
-    participant UI as HackNect Frontend (/explore)
-    participant API as Next.js API (/api/teams)
-    participant Supabase as Supabase DB & Storage
-    
-    Participant->>UI: Browse & Select Hackathon
-    Participant->>UI: Click "Register" -> Choose "Create Team" or "Join Team"
-    alt Create Team
-        Participant->>API: POST /api/teams { action: 'create', teamName, hackathonId }
-        API->>Supabase: Check existing registration for user & hackathon
-        API->>Supabase: Insert into registrations (with generated invite_code)
-        API-->>UI: Return registration & inviteCode
-        UI-->>Participant: Display invite code to share with teammates
-    else Join Team
-        Participant->>API: POST /api/teams { action: 'join', inviteCode }
-        API->>Supabase: Verify code & team_max capacity
-        API->>Supabase: Append user_id to teammates array
-        API-->>UI: Return success confirmation
-    end
-
-    Participant->>UI: Navigate to Team Workspace (/registration/[id])
-    Note over Participant, UI: Teammates join via invite code until min_team size met
-    Participant->>UI: Team Leader uploads Project Proposal PDF
-    UI->>API: PUT /api/registrations/[id] (FormData with PDF)
-    API->>Supabase: Validate team_min, upload to bucket 'registrations'
-    API->>Supabase: Update registrations.idea_pdf_url
-    API-->>UI: Return PDF URL & update UI to "Idea PDF Submitted"
+#### `POST /api/shortlist-ideas`
+- **Description**: Executes the AI evaluation pipeline on project proposal PDFs.
+- **Auth**: Requires `GEMINI_API_KEY` configured on the server.
+- **Payload**:
+```json
+{
+  "hackathonId": "hackathon-uuid",
+  "n": 5,
+  "pdfUrls": ["https://.../pdf1.pdf", "https://.../pdf2.pdf"]
+}
+```
+*(Note: If `pdfUrls` is empty or omitted, it auto-fetches all non-null `idea_pdf_url` from registrations for `hackathonId`)*.
+- **Limits**: Maximum 20 PDFs per request.
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "shortlisted": [
+    "https://.../best_idea.pdf",
+    "https://.../second_best.pdf"
+  ],
+  "scores": [
+    { "url": "https://.../best_idea.pdf", "score": 92, "registration_id": "uuid-1" },
+    { "url": "https://.../second_best.pdf", "score": 85, "registration_id": "uuid-2" }
+  ]
+}
 ```
 
 ---
 
-### 6.2 Organizer AI Shortlisting Flow
+## 7. Authentication, Authorization & Security
 
-```mermaid
-sequenceDiagram
-    autonumber
-    actor Organizer
-    participant UI as Creator Dash (/creator-dash/[id])
-    participant API as Next.js API (/api/shortlist-ideas)
-    participant HF as Hugging Face (Mistral-7B)
-    participant Supabase as Supabase DB
+### 7.1 Authentication Architecture
+HackNect delegates user identity and session management to **Clerk**.
+1. **Frontend Context**: [`RootLayout`](file:///c:/Users/yatis/Desktop/HackNect/HackNect/app/layout.js) wraps the entire application with `<ClerkProvider>`.
+2. **User Identity Sync**: Clerk triggers `POST /api/clerk/webhook` upon `user.created` / `user.updated`. The handler saves the user into `public.users` with `clerk_id`, `name`, and `email`.
+3. **Internal ID Resolution**: In server routes, calling `const { userId } = await auth()` yields the Clerk ID. Routes query `supabase.from('users').select('id').eq('clerk_id', userId).single()` to obtain the Supabase UUID used in all foreign key references.
 
-    Organizer->>UI: Open Hackathon Details -> Switch to "Shortlisted" Tab
-    Organizer->>UI: Click "Shortlist Best N Ideas"
-    UI->>API: POST /api/shortlist-ideas { pdfUrls, n: top_n_selections }
-    
-    loop For each PDF URL
-        API->>API: Download PDF stream & parse text via pdf-parse
-    end
-    
-    API->>HF: Prompt Mistral-7B with idea summaries (Innovation, Feasibility, Impact, Execution)
-    HF-->>API: Selected idea indices (e.g. [2, 5, 1])
-    API->>API: Extract indices & match with registration IDs
-    API->>Supabase: DELETE existing shortlists for hackathon
-    API->>Supabase: INSERT into public.shortlists (hackathon_id, registration_id)
-    API-->>UI: Return shortlisted URLs
-    UI->>UI: Refetch shortlisted teams from /api/hackathons/[id]/shortlisted
-    UI-->>Organizer: Render cards for all AI-shortlisted teams
+### 7.2 Route Protection ([`middleware.js`](file:///c:/Users/yatis/Desktop/HackNect/HackNect/middleware.js))
+Clerk middleware intercepts requests to protected routes:
+```javascript
+const isProtectedRoute = createRouteMatcher([
+  '/dash(.*)',
+  '/creator-dash(.*)',
+  '/explore/:id/register(.*)',
+  '/teams(.*)',
+  '/registrations(.*)',
+  '/hosting(.*)'
+]);
+
+export default clerkMiddleware(async (auth, req) => {
+  if (isProtectedRoute(req)) {
+    const { userId, redirectToSignIn } = await auth();
+    if (!userId) {
+      return redirectToSignIn();
+    }
+  }
+});
 ```
 
+### 7.3 Authorization & Access Control Rules
+- **Hackathon Editing / Deletion**: Only the creator (`creator_id == user.id`) can update a hackathon or view its applicant list and shortlisted candidates.
+- **Registration Access**: Only users in `[team_leader_id, ...teammates]` can view `GET /api/registrations/[id]`.
+- **Idea PDF Upload**: Only the `team_leader_id` can execute `PUT /api/registrations/[id]`, and only after the team size reaches `team_min`.
+- **Team Joining**: A user cannot join a team if `currentTeamSize > team_max`, or if they are already registered in any team for that hackathon.
+
+### 7.4 Database Security & Service Role Key
+- The Supabase client initialized in [`lib/supabase.js`](file:///c:/Users/yatis/Desktop/HackNect/HackNect/lib/supabase.js) uses `SUPABASE_SERVICE_ROLE_KEY`. This key intentionally bypasses PostgreSQL Row Level Security (RLS) on the server.
+- The `supabase_schema.sql` enables RLS on all tables and creates permissive public policies. However, since the client is only instantiated on the server side, direct client-side DB tampering is prevented as long as `SUPABASE_SERVICE_ROLE_KEY` is kept secret and not exposed with a `NEXT_PUBLIC_` prefix.
+
 ---
 
-### 6.3 Authentication & User Sync Flow
+## 8. Core Business Logic & Algorithms
 
-```mermaid
-sequenceDiagram
-    autonumber
-    actor User
-    participant Clerk as Clerk Auth
-    participant Middleware as Next.js middleware.js
-    participant Webhook as /api/clerk/webhook
-    participant Supabase as Supabase DB (public.users)
+### 8.1 Standardized AI Evaluation Rubric ([`constants.js`](file:///c:/Users/yatis/Desktop/HackNect/HackNect/app/api/shortlist-ideas/components/constants.js))
+The Gemini model evaluates project submissions against a strict 100-point rubric:
 
-    User->>Clerk: Sign In / Sign Up
-    Clerk->>Middleware: User Session JWT
-    Middleware->>Middleware: Enforce protected route checks (/dash, /creator-dash, etc.)
-    Clerk->>Webhook: Webhook Event (user.created / user.updated) with Svix Signature
-    Webhook->>Webhook: Verify HMAC Svix headers with CLERK_WEBHOOK_SECRET
-    Webhook->>Supabase: UPSERT into public.users (clerk_id, name, email)
-    Supabase-->>Webhook: Record synchronized
-    Webhook-->>Clerk: 200 OK
+| Dimension | Points Range | Criteria & Evaluation Rules |
+| :--- | :---: | :--- |
+| **1. Innovation** | 0 – 30 | Originality, differentiation from existing solutions, and meaningful improvements. (0–5: Generic; 6–12: Minor improvement; 13–18: Meaningful; 19–24: Strongly differentiated; 25–30: Exceptional). |
+| **2. Social Impact** | 0 – 25 | Importance of problem, identified beneficiaries, expected benefits, real-world reach. (0–4: Unclear; 5–10: Limited; 11–15: Relevant with credible benefits; 16–20: Significant; 21–25: Exceptional). |
+| **3. Feasibility** | 0 – 25 | Implementation practicality, project scope, constraints, prototype achievability. (0–4: No credible path; 5–10: Major gaps; 11–15: Plausible; 16–20: Achievable scope; 21–25: Highly practical). |
+| **4. Technical Execution** | 0 – 20 | Architecture coherence, technical detail, technology suitability, integration, testing. (0–3: Almost none; 4–8: Basic; 9–12: Moderate detail; 13–16: Clear architecture; 17–20: Thorough design). |
+| **Total** | **0 – 100** | **Integer sum of all 4 criteria.** |
+
+#### Gemini Inference Settings ([`scorer.js`](file:///c:/Users/yatis/Desktop/HackNect/HackNect/app/api/shortlist-ideas/components/scorer.js))
+- **Model**: `gemini-3.5-flash-lite` (or fallback from `process.env.GEMINI_MODEL`).
+- **Temperature**: `0` (enforces deterministic scoring).
+- **Seed**: `42` (ensures reproducible scores across runs).
+- **Max Output Tokens**: `64`.
+- **Text Truncation**: Inputs are truncated to `8000` characters (`MAX_CHARS_PER_PDF`) to avoid token overflow.
+- **Parsing**: A regular expression `/\d+(?:\.\d+)?/` extracts the score, which is clamped between `0` and `100`:
+  ```javascript
+  const finalScore = Math.max(0, Math.min(100, Math.round(parsedScore)));
+  ```
+
+### 8.2 Invite Code Generation Algorithm
+Invite codes are generated in [`app/api/teams/route.js`](file:///c:/Users/yatis/Desktop/HackNect/HackNect/app/api/teams/route.js):
+```javascript
+const generateInviteCode = () => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let result = '';
+    for (let i = 0; i < 8; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+};
 ```
+The endpoint executes a uniqueness check in a loop (up to 10 attempts) against `public.registrations.invite_code` before saving.
+
+### 8.3 Team Gating & Member Calculation
+In [`app/registration/[id]/page.jsx`](file:///c:/Users/yatis/Desktop/HackNect/HackNect/app/registration/[id]/page.jsx):
+- Unique member IDs: `memberIds = new Set([registration.team_leader_id, ...(registration.teammates || [])].filter(Boolean))`
+- Member count: `currentMemberCount = memberIds.size`
+- Minimum threshold: `isTeamSizeSufficient = currentMemberCount >= minTeamSize`
+- Needed count: `neededMembers = Math.max(0, minTeamSize - currentMemberCount)`
+
+### 8.4 Participant Dashboard Metrics ([`app/dash/page.jsx`](file:///c:/Users/yatis/Desktop/HackNect/HackNect/app/dash/page.jsx))
+- **Created**: Count of hackathons where `creator_id == user.id`.
+- **Participating (Ongoing)**: Registrations where `new Date(registration_deadline) >= new Date()`.
+- **Completed**: Registrations where `new Date(registration_deadline) < new Date()`.
+- **Shortlisted (Wins)**: Count of user registrations present in `public.shortlists` (queried via `POST /api/shortlists/user-wins`).
 
 ---
 
-## 7. Project Structure & Codebase Map
+## 9. Setup, Configuration & Deployment
 
-```
-HackNect/
-├── .clerk/                        # Clerk temporary local dev configurations
-├── app/                           # Next.js 15 App Router
-│   ├── api/                       # Backend API route handlers
-│   │   ├── clerk/
-│   │   │   └── webhook/route.js   # Svix-verified Clerk webhook handler
-│   │   ├── hackathons/
-│   │   │   ├── route.js           # GET (user created), POST (create hackathon)
-│   │   │   ├── [id]/
-│   │   │   │   ├── route.js       # GET / PUT specific hackathon
-│   │   │   │   ├── registrations/ # GET all registrations for a hackathon
-│   │   │   │   └── shortlisted/   # GET all shortlisted teams for a hackathon
-│   │   │   └── public/
-│   │   │       ├── route.js       # GET all hackathons for public explore
-│   │   │       └── [id]/route.js  # GET public hackathon details
-│   │   ├── registrations/
-│   │   │   └── [id]/route.js      # GET details / PUT upload PDF
-│   │   ├── shortlist-ideas/
-│   │   │   └── route.js           # AI PDF parser & Hugging Face judging engine
-│   │   ├── shortlists/
-│   │   │   └── user-wins/route.js # POST count shortlisted wins for user
-│   │   ├── teams/
-│   │   │   ├── route.js           # GET user teams, POST create/join team
-│   │   │   └── [id]/
-│   │   │       └── members/route.js # GET team members by team ID
-│   │   └── webhook/
-│   │       └── register/route.js  # Re-exports Clerk webhook
-│   ├── creator-dash/              # Creator Portal
-│   │   ├── page.jsx               # Creator Dashboard (list of hosted events)
-│   │   └── [id]/page.jsx          # Event Management: Details, Registrations, AI Shortlisting
-│   ├── dash/
-│   │   └── page.jsx               # Participant Dashboard (metrics, registrations, status)
-│   ├── explore/                   # Public Exploration
-│   │   ├── page.jsx               # Filterable hackathons directory
-│   │   └── [id]/
-│   │       ├── page.jsx           # Hackathon overview & countdown
-│   │       └── register/page.jsx  # Team creation & invite-code joining
-│   ├── hosting/
-│   │   └── page.jsx               # Host a Hackathon form (offline/virtual, banners, constraints)
-│   ├── registration/
-│   │   └── [id]/page.jsx          # Team submission workspace (PDF upload, invite sharing)
-│   ├── teams/
-│   │   └── [id]/page.jsx          # Team member roster view
-│   ├── globals.css                # Global styles & Tailwind imports
-│   ├── layout.js                  # Root layout (ClerkProvider, Background, Navbar)
-│   └── page.jsx                   # Landing Page (Featured hackathons, Why HackNect)
-├── components/                    # Reusable React UI Components
-│   ├── Background.jsx             # Ambient canvas/particle backdrop
-│   ├── Loader.jsx                 # Custom animated spinner
-│   └── Navbar.jsx                 # Dynamic responsive navbar with Clerk user menu
-├── lib/
-│   └── supabase.js                # Singleton Supabase client (Service Role for API)
-├── public/                        # Static assets (icons, default banners)
-├── supabase/                      # Database configuration & migrations
-│   ├── migrations/
-│   │   └── 20260815190743_create_users.sql
-│   └── config.toml
-├── middleware.js                  # Clerk route protection middleware
-├── supabase_schema.sql            # Master database setup script (Tables, RLS, Storage, Triggers)
-├── package.json                   # Dependencies & scripts
-└── context.md                     # Comprehensive project documentation
-```
+### 9.1 Environment Variables
+Create a `.env` file in the project root:
 
----
+| Variable | Required | Description | Example / Source |
+| :--- | :---: | :--- | :--- |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Yes | Clerk publishable key for browser SDK | `pk_test_...` (Clerk Dashboard) |
+| `CLERK_SECRET_KEY` | Yes | Clerk secret backend key | `sk_test_...` (Clerk Dashboard) |
+| `CLERK_WEBHOOK_SECRET` | Yes | Signing secret for verifying Clerk svix webhooks | `whsec_...` (Clerk Webhooks tab) |
+| `SUPABASE_URL` | Yes | Supabase project REST URL | `https://xyz.supabase.co` |
+| `SUPABASE_SERVICE_ROLE_KEY` | Yes | Supabase secret service role key (bypasses RLS) | `sb_secret_...` or service_role secret |
+| `GEMINI_API_KEY` | Yes | Google AI Studio API Key for Gemini | `AQ.Ab...` (Google AI Studio) |
+| `GEMINI_MODEL` | No | Target Gemini model identifier (default: `gemini-3.5-flash-lite`) | `gemini-3.5-flash-lite` |
 
-## 8. Security & Business Rules
+> [!CAUTION]
+> Never prefix `SUPABASE_SERVICE_ROLE_KEY` or `CLERK_SECRET_KEY` with `NEXT_PUBLIC_`, as doing so exposes database admin capabilities and auth credentials to the browser.
 
-### 8.1 Route Protection & Authentication
-- Protected routes in `middleware.js`:
-  - `/dash(.*)`
-  - `/creator-dash(.*)`
-  - `/explore/:id/register(.*)`
-  - `/teams(.*)`
-  - `/registrations(.*)`
-  - `/hosting(.*)`
-- Unauthenticated visitors accessing protected routes are automatically redirected to Clerk sign-in.
+### 9.2 Database Setup
+1. Open your Supabase project dashboard.
+2. Navigate to **SQL Editor**.
+3. Paste and execute the entire contents of [`supabase_schema.sql`](file:///c:/Users/yatis/Desktop/HackNect/HackNect/supabase_schema.sql).
+4. Verify that:
+   - Extensions `uuid-ossp` and `pgcrypto` are active.
+   - Tables `users`, `hackathons`, `registrations`, `shortlists`, `teams`, and `team_members` exist.
+   - Storage buckets `hackathons` and `registrations` are created and set to public.
 
-### 8.2 Team Size & Submission Constraints
-1. **Minimum Team Size Enforcement**: Teams cannot submit an idea PDF until the total unique members (Leader + Teammates) meets or exceeds `hackathons.team_min`. The UI locks the upload form with explanatory warnings, and the API rejects undersized submissions with `400 Bad Request`.
-2. **Maximum Team Size Enforcement**: Joining via invite code verifies that current team size does not exceed `hackathons.team_max`.
-3. **Single Registration Rule**: A user cannot register more than once for the same hackathon (neither as leader nor teammate).
+### 9.3 Clerk Webhook Setup
+1. Open Clerk Dashboard -> **Webhooks**.
+2. Add an endpoint pointing to `https://<YOUR_DOMAIN>/api/clerk/webhook` (for local development, use an ngrok or local tunnel URL).
+3. Subscribe to events: `user.created`, `user.updated`, `user.deleted`.
+4. Copy the **Signing Secret** and paste it as `CLERK_WEBHOOK_SECRET` in `.env`.
 
-### 8.3 Creator Authorization
-- Only the user whose `users.id` matches `hackathons.creator_id` can:
-  - Edit hackathon details (`PUT /api/hackathons/[id]`).
-  - Access registrant email rosters (`GET /api/hackathons/[id]/registrations`).
-  - Trigger AI shortlisting runs.
-
----
-
-## 9. Environment Variables Configuration
-
-| Variable Name | Purpose | Example / Notes |
-| :--- | :--- | :--- |
-| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk client authentication | `pk_test_...` |
-| `CLERK_SECRET_KEY` | Clerk server authentication | `sk_test_...` |
-| `CLERK_WEBHOOK_SECRET` | Svix HMAC secret for Clerk webhook verification | `whsec_...` |
-| `SUPABASE_URL` | Supabase project URL | `https://<ref>.supabase.co` |
-| `SUPABASE_SERVICE_ROLE_KEY` | Supabase admin key for server-side queries & storage operations | `sb_secret_...` |
-| `HUGGING_FACE_KEY` / `HF_TOKEN` | Hugging Face API key for LLM shortlisting | `hf_...` |
-
----
-
-## 10. Development & Deployment Guide
-
-### 10.1 Local Development
+### 9.4 Local Development
 ```bash
 # 1. Install dependencies
 npm install
 
-# 2. Configure Environment Variables
-# Create a .env file with the variables listed in Section 9
-
-# 3. Apply Supabase Database Schema
-# Copy and execute supabase_schema.sql in your Supabase SQL Editor
-
-# 4. Start Next.js Development Server (with Turbopack)
+# 2. Run Next.js in Turbopack development mode
 npm run dev
+
+# 3. Access local instance
+# Open http://localhost:3000 in your browser
 ```
 
-### 10.2 Production Build
+### 9.5 Production Build & Deployment
 ```bash
-# Build optimized Next.js bundle
+# Lint check
+npm run lint
+
+# Production build
 npm run build
 
 # Start production server
-npm run start
+npm start
 ```
+For Vercel deployment:
+1. Connect the GitHub repository to Vercel.
+2. Add all environment variables from Section 9.1 to the Vercel project settings.
+3. Deploy. Ensure the Clerk Webhook endpoint URL matches your live production domain.
+
+---
+
+## 10. Architectural Nuances, Discrepancies & Recommendations
+
+For developers or AI agents modifying HackNect, note these specific implementation characteristics:
+
+### 10.1 Dual Team Models (`registrations` vs `teams`)
+- **Active Model (`public.registrations`)**: The core application (`/explore/[id]/register`, `/dash`, `/creator-dash/[id]`, `/registration/[id]`) uses `public.registrations` as its team entity. Teams are created in `registrations` with an array column `teammates: UUID[]` and `invite_code`.
+- **Secondary Model (`public.teams` & `public.team_members`)**: A normalized relational team schema exists in `supabase_schema.sql` and is only accessed by `GET /api/teams/[id]/members` and [`app/teams/[id]/page.jsx`](file:///c:/Users/yatis/Desktop/HackNect/HackNect/app/teams/[id]/page.jsx).
+- **Guidance**: When writing new team logic, continue using `public.registrations` unless executing a planned database migration to transition to normalized `teams` and `team_members` tables.
+
+### 10.2 Middleware Protection Path Pluralization
+- In [`middleware.js`](file:///c:/Users/yatis/Desktop/HackNect/HackNect/middleware.js), line 7 protects `'/registrations(.*)'`.
+- However, the actual participant page folder is named `app/registration/[id]/page.jsx` (singular).
+- While the API handler [`app/api/registrations/[id]/route.js`](file:///c:/Users/yatis/Desktop/HackNect/HackNect/app/api/registrations/[id]/route.js) independently verifies `const { userId } = await auth()` and returns `401 Unauthorized`, adding `'/registration(.*)'` to `middleware.js` will ensure unauthenticated users are redirected to sign-in at the edge before the page shell renders.
+
+### 10.3 Dead Link in [`app/teams/[id]/page.jsx`](file:///c:/Users/yatis/Desktop/HackNect/HackNect/app/teams/[id]/page.jsx)
+- Line 111 and 130 reference `<Link href="/register">`.
+- There is no `/register` route in the application (team registration is located at `/explore/[id]/register`). If updating this page, adjust the link to point to `/explore` or `/dash`.
+
+### 10.4 Foreign Key Naming in Supabase PostgREST Joins
+- Several queries in `hackathons/route.js`, `hackathons/public/route.js`, and `registrations/[id]/route.js` use explicit PostgREST constraint names:
+  `users!hackathons_creator_id_fkey(...)` and `users!registrations_team_leader_id_fkey(...)`.
+- If modifying constraints in PostgreSQL, preserve these exact constraint names (`hackathons_creator_id_fkey` and `registrations_team_leader_id_fkey`) to avoid breaking PostgREST embedded joins.

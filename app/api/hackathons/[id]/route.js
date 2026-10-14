@@ -105,7 +105,7 @@ export async function PUT(req, { params }) {
         // Handle banner upload
         let banner_url = existingHackathon.banner_url;
         const bannerFile = formData.get('banner_url');
-        if (bannerFile && bannerFile instanceof File) {
+        if (bannerFile && bannerFile instanceof File && bannerFile.size > 0) {
             const bannerExt = bannerFile.name.split('.').pop();
             const bannerPath = `banners/${uuidv4()}.${bannerExt}`;
             const { data, error } = await supabase.storage
@@ -120,7 +120,7 @@ export async function PUT(req, { params }) {
         // Handle pfp upload
         let pfp_url = existingHackathon.pfp_url;
         const pfpFile = formData.get('pfp_url');
-        if (pfpFile && pfpFile instanceof File) {
+        if (pfpFile && pfpFile instanceof File && pfpFile.size > 0) {
             const pfpExt = pfpFile.name.split('.').pop();
             const pfpPath = `pfps/${uuidv4()}.${pfpExt}`;
             const { data, error } = await supabase.storage

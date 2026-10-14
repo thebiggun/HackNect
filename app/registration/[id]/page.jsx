@@ -130,6 +130,11 @@ const RegistrationDetailPage = () => {
             return;
         }
 
+        if (file.size > 4.2 * 1024 * 1024) {
+            setUploadError(`File is too large (${(file.size / (1024 * 1024)).toFixed(1)} MB). PDF size must be under 4MB due to server upload limits.`);
+            return;
+        }
+
         setUploading(true);
         const formData = new FormData();
         formData.append('pdf', file);
@@ -139,6 +144,24 @@ const RegistrationDetailPage = () => {
                 method: 'PUT',
                 body: formData,
             });
+
+            if (!res.ok) {
+                let errorMsg = 'Failed to upload PDF.';
+                try {
+                    const errorData = await res.json();
+                    errorMsg = errorData.error || errorMsg;
+                } catch {
+                    const text = await res.text();
+                    if (res.status === 413 || text.includes('FUNCTION_PAYLOAD_TOO_LARGE') || text.includes('Request Entity Too Large')) {
+                        errorMsg = 'PDF is too large for server limits. Please compress your PDF to under 4MB.';
+                    } else if (text) {
+                        errorMsg = text.slice(0, 150);
+                    }
+                }
+                setUploadError(errorMsg);
+                return;
+            }
+
             const data = await res.json();
             if (data.success) {
                 setUploadSuccess('Idea PDF uploaded successfully!');
@@ -149,7 +172,7 @@ const RegistrationDetailPage = () => {
                 setUploadError(data.error || 'Failed to upload PDF.');
             }
         } catch (err) {
-            setUploadError('Failed to upload PDF. Please check your connection and try again.');
+            setUploadError(err.message || 'Failed to upload PDF. Please check your connection and try again.');
         } finally {
             setUploading(false);
         }

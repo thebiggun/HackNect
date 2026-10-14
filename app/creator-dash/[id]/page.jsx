@@ -11,6 +11,7 @@ import {
     formatDate,
     getStatus,
 } from "./components";
+import { compressImage } from "@/lib/imageUtils";
 
 const HackathonDetail = () => {
     const params = useParams();
@@ -164,6 +165,7 @@ const HackathonDetail = () => {
     const handleSubmit = async (e) => {
         if (e && e.preventDefault) e.preventDefault();
         setSaving(true);
+        setError(null);
 
         try {
             const submitData = new FormData();
@@ -176,20 +178,51 @@ const HackathonDetail = () => {
             });
 
             // Add files if selected
-            const bannerFile = document.getElementById('banner-upload')?.files[0];
+            let bannerFile = document.getElementById('banner-upload')?.files[0];
             if (bannerFile) {
+                bannerFile = await compressImage(bannerFile, {
+                    maxWidth: 1920,
+                    maxHeight: 1080,
+                    quality: 0.8,
+                });
                 submitData.append('banner_url', bannerFile);
             }
 
-            const pfpFile = document.getElementById('pfp-upload')?.files[0];
+            let pfpFile = document.getElementById('pfp-upload')?.files[0];
             if (pfpFile) {
+                pfpFile = await compressImage(pfpFile, {
+                    maxWidth: 512,
+                    maxHeight: 512,
+                    quality: 0.85,
+                });
                 submitData.append('pfp_url', pfpFile);
+            }
+
+            const totalBytes = (bannerFile?.size || 0) + (pfpFile?.size || 0);
+            if (totalBytes > 4 * 1024 * 1024) {
+                throw new Error("Total upload size exceeds 4MB. Please select smaller images.");
             }
 
             const response = await fetch(`/api/hackathons/${params.id}`, {
                 method: 'PUT',
                 body: submitData,
             });
+
+            if (!response.ok) {
+                let errorMsg = `Failed to update hackathon (${response.status})`;
+                try {
+                    const data = await response.json();
+                    errorMsg = data.error || errorMsg;
+                } catch {
+                    const text = await response.text();
+                    if (response.status === 413 || text.includes('FUNCTION_PAYLOAD_TOO_LARGE') || text.includes('Request Entity Too Large')) {
+                        errorMsg = 'Images are too large for server limits. Please select smaller images.';
+                    } else if (text) {
+                        errorMsg = text.slice(0, 150);
+                    }
+                }
+                throw new Error(errorMsg);
+            }
 
             const data = await response.json();
 
@@ -205,7 +238,7 @@ const HackathonDetail = () => {
                 setError(data.error || 'Failed to update hackathon');
             }
         } catch (err) {
-            setError('Failed to update hackathon');
+            setError(err.message || 'Failed to update hackathon');
             console.error('Error updating hackathon:', err);
         } finally {
             setSaving(false);
